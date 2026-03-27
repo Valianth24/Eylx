@@ -18,6 +18,7 @@
   --sage:#7A9E8C; --sage-l:#9DC4B0; --sage-d:#3D6B57;
   --violet:#8B7EC8; --violet-l:#B0A5E8; --violet-d:#4E4490;
   --ice:#6BA3C8; --ice-l:#96C8E8; --ice-d:#355A80;
+  --pro:#C8A028; --pro-l:#F0CC50; --pro-d:#7A5C08;
   --danger:#C45050;
   --accent: var(--amber);
   --accent-l: var(--amber-l);
@@ -32,17 +33,16 @@
   --glow: 0 0 60px rgba(212,168,67,0.08);
   --shadow-deep: 0 24px 80px rgba(0,0,0,0.6);
 }
-/* Duygu bazlı tema geçişleri */
 :root[data-mood="emotional"]    { --accent:var(--rose);   --accent-l:var(--rose-l);   --accent-d:var(--rose-d);   }
 :root[data-mood="philosophical"]{ --accent:var(--violet); --accent-l:var(--violet-l); --accent-d:var(--violet-d); }
 :root[data-mood="technical"]    { --accent:var(--ice);    --accent-l:var(--ice-l);    --accent-d:var(--ice-d);    }
 :root[data-mood="playful"]      { --accent:var(--sage);   --accent-l:var(--sage-l);   --accent-d:var(--sage-d);   }
 :root[data-mood="neutral"]      { --accent:var(--amber);  --accent-l:var(--amber-l);  --accent-d:var(--amber-d);  }
+:root[data-mood="pro"]          { --accent:var(--pro);    --accent-l:var(--pro-l);    --accent-d:var(--pro-d);    }
 
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:var(--c0);color:var(--c9);font-family:var(--font)}
 
-/* Arka plan nebula efekti */
 body::before{
   content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:
@@ -54,8 +54,8 @@ body::before{
 body[data-mood="emotional"]::before{background:radial-gradient(ellipse 60% 40% at 15% 15%, rgba(196,117,106,.05) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 85% 80%, rgba(196,117,106,.03) 0%, transparent 70%);}
 body[data-mood="philosophical"]::before{background:radial-gradient(ellipse 60% 40% at 15% 15%, rgba(139,126,200,.06) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 85% 80%, rgba(139,126,200,.04) 0%, transparent 70%);}
 body[data-mood="technical"]::before{background:radial-gradient(ellipse 60% 40% at 15% 15%, rgba(107,163,200,.05) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 85% 80%, rgba(107,163,200,.03) 0%, transparent 70%);}
+body[data-mood="pro"]::before{background:radial-gradient(ellipse 60% 40% at 15% 15%, rgba(200,160,40,.08) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 85% 80%, rgba(200,160,40,.05) 0%, transparent 70%);}
 
-/* Film tanesi */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 #app{height:100dvh;max-width:820px;margin:0 auto;display:flex;flex-direction:column;position:relative;z-index:1}
@@ -71,7 +71,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 }
 .head-left{display:flex;align-items:center;gap:14px;min-width:0}
 
-/* Orbital avatar */
 .orb-wrap{position:relative;width:48px;height:48px;flex-shrink:0}
 .orb-ring{
   position:absolute;inset:-3px;border-radius:50%;
@@ -86,8 +85,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .orb-core{
   position:absolute;inset:3px;border-radius:50%;
   background:linear-gradient(145deg,var(--c3),var(--c1));
-  display:flex;align-items:center;justify-content:center;
-  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
 .orb-letter{font-family:var(--font-serif);font-size:20px;color:var(--accent);line-height:1;font-style:italic}
 .orb-pulse{
@@ -108,6 +106,16 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .title-main em{color:var(--accent);font-style:italic}
 .title-sub{font-size:11px;color:var(--c6);margin-top:3px;font-family:var(--font-mono);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;transition:color .4s ease}
 
+/* PRO MOD badge */
+.pro-badge{
+  display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--c0);background:var(--pro);
+  padding:2px 7px;border-radius:999px;margin-left:6px;
+  font-family:var(--font-mono);animation:pro-glow 2s ease-in-out infinite;
+}
+@keyframes pro-glow{0%,100%{box-shadow:0 0 8px rgba(200,160,40,.4)}50%{box-shadow:0 0 16px rgba(200,160,40,.7)}}
+
 .head-right{display:flex;align-items:center;gap:6px}
 .hbtn{
   width:34px;height:34px;border-radius:50%;border:1px solid var(--line-s);
@@ -118,21 +126,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .hbtn:hover{background:rgba(255,255,255,.07);color:var(--c8);border-color:rgba(255,255,255,.18)}
 .hbtn.active{background:rgba(var(--accent),.15);color:var(--accent);border-color:var(--accent)}
 .hbtn .badge-dot{position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--accent);border:1.5px solid var(--c0)}
-.speaker-pill{
-  display:flex;border-radius:999px;border:1px solid var(--line-s);overflow:hidden;
-}
-.sp-opt{
-  padding:7px 14px;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
-  background:transparent;border:none;color:var(--c6);cursor:pointer;transition:all .18s ease;
-  font-family:var(--font);
-}
+.speaker-pill{display:flex;border-radius:999px;border:1px solid var(--line-s);overflow:hidden;}
+.sp-opt{padding:7px 14px;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:none;color:var(--c6);cursor:pointer;transition:all .18s ease;font-family:var(--font);}
 .sp-opt.active{background:var(--accent);color:var(--c0)}
 
 /* ═══ MODEBAR ═══ */
-#modebar{
-  display:flex;gap:6px;padding:8px 18px 8px;overflow-x:auto;flex-shrink:0;
-  border-bottom:1px solid var(--line);
-}
+#modebar{display:flex;gap:6px;padding:8px 18px 8px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--line);}
 #modebar::-webkit-scrollbar{display:none}
 .mode-pill{
   border-radius:999px;padding:5px 13px;font-size:11px;font-weight:500;
@@ -146,6 +145,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .mode-pill.active[data-mode="teknik"]{border-color:var(--ice);color:var(--ice);background:rgba(107,163,200,.08)}
 .mode-pill.active[data-mode="yaratici"]{border-color:var(--violet);color:var(--violet);background:rgba(139,126,200,.08)}
 .mode-pill.active[data-mode="derin"]{border-color:var(--sage);color:var(--sage);background:rgba(122,158,140,.08)}
+.mode-pill.active[data-mode="pro"]{border-color:var(--pro);color:var(--pro);background:rgba(200,160,40,.12);animation:pro-glow 2s ease-in-out infinite;}
 
 /* ═══ DUYGU ŞERİDİ ═══ */
 #emotion-timeline{
@@ -153,14 +153,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
   border-bottom:1px solid var(--line);flex-shrink:0;overflow:hidden;
   background:rgba(12,11,10,0.4);
 }
-.emo-tick{
-  width:4px;height:4px;border-radius:50%;flex-shrink:0;
-  transition:all .3s ease;
-}
+.emo-tick{width:4px;height:4px;border-radius:50%;flex-shrink:0;transition:all .3s ease;}
 .emo-tick.emotional{background:var(--rose);height:16px;border-radius:2px}
 .emo-tick.philosophical{background:var(--violet);height:14px;border-radius:2px}
 .emo-tick.technical{background:var(--ice);height:10px;border-radius:2px}
 .emo-tick.playful{background:var(--sage);height:12px;border-radius:2px}
+.emo-tick.pro{background:var(--pro);height:18px;border-radius:2px}
 .emo-tick.neutral{background:var(--c5);height:4px}
 .emo-label{font-size:9px;color:var(--c5);font-family:var(--font-mono);margin-left:4px;letter-spacing:.06em}
 
@@ -169,7 +167,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 #messages::-webkit-scrollbar{width:3px}
 #messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:999px}
 
-/* Karşılama ekranı */
 #welcome{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:40px;animation:fadeUp .5s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 .w-eyebrow{font-size:10px;font-family:var(--font-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--c5);margin-bottom:14px}
@@ -187,19 +184,16 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .starter:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);color:var(--c9);transform:translateX(4px)}
 .starter-ico{width:26px;text-align:center;flex-shrink:0;opacity:.7;font-size:16px}
 
-/* Tarih bölücü */
 .date-divider{display:flex;align-items:center;gap:12px;margin:22px 0 18px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--c5);font-family:var(--font-mono)}
 .date-divider::before,.date-divider::after{content:'';height:1px;flex:1;background:var(--line)}
 
-/* Mesaj satırları */
 .msg-row{display:flex;flex-direction:column;animation:rise .26s cubic-bezier(.22,.68,0,1.1) both}
 .msg-row.user{align-items:flex-end;margin-bottom:14px}
 .msg-row.eylx{align-items:flex-start;margin-bottom:22px}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 .user-bubble{
-  max-width:min(72%,520px);
-  background:var(--c3);color:var(--ca);
+  max-width:min(72%,520px);background:var(--c3);color:var(--ca);
   padding:12px 16px;border-radius:16px 16px 3px 16px;
   font-size:14.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word;
   border:1px solid var(--line-s);
@@ -222,7 +216,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .eylx-text pre{background:var(--c1);border:1px solid var(--line-s);border-radius:10px;padding:14px;overflow-x:auto;margin:10px 0}
 .eylx-text pre code{background:transparent;padding:0}
 
-/* Scratchpad */
+/* PRO badge on messages */
+.pro-msg-badge{
+  display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;
+  color:var(--pro);background:rgba(200,160,40,.12);border:1px solid rgba(200,160,40,.25);
+  border-radius:999px;padding:2px 8px;margin-bottom:6px;font-family:var(--font-mono);
+  letter-spacing:.06em;
+}
+
 .scratch-badge{
   display:inline-flex;align-items:center;gap:5px;font-size:9.5px;color:var(--c5);
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
@@ -238,28 +239,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 }
 .scratch-detail.open{display:block;animation:fadeUp .2s ease}
 
-/* Thinking */
 .thinking-wrap{display:flex;align-items:center;gap:8px;padding:5px 1px}
 .think-dots{display:flex;gap:5px}
-.think-dots span{
-  width:6px;height:6px;border-radius:50%;background:var(--accent);
-  animation:tdot 1.4s ease-in-out infinite;opacity:.3;
-}
+.think-dots span{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:tdot 1.4s ease-in-out infinite;opacity:.3;}
 .think-dots span:nth-child(2){animation-delay:.2s}
 .think-dots span:nth-child(3){animation-delay:.4s}
 @keyframes tdot{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:.9;transform:scale(1.1)}}
 .think-note{font-size:11px;color:var(--c5);font-style:italic;font-family:var(--font-mono)}
 
-/* Cursor */
 .cursor{display:inline-block;width:1.5px;height:15px;background:var(--accent);border-radius:1px;vertical-align:middle;animation:blink .9s ease-in-out infinite}
 @keyframes blink{50%{opacity:0}}
 
-/* ═══ YEREL CEVAP rozeti ═══ */
 .local-badge{
   display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--sage);
   background:rgba(122,158,140,.1);border:1px solid rgba(122,158,140,.2);
-  border-radius:999px;padding:2px 8px;margin-bottom:6px;font-family:var(--font-mono);
-  letter-spacing:.06em;
+  border-radius:999px;padding:2px 8px;margin-bottom:6px;font-family:var(--font-mono);letter-spacing:.06em;
 }
 
 /* ═══ SES DALGASI ═══ */
@@ -269,10 +263,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
   background:rgba(12,11,10,.8);border-bottom:1px solid var(--line);flex-shrink:0;
 }
 #voice-wave.active{height:54px}
-.wave-bar{
-  width:3px;border-radius:2px;background:var(--accent);opacity:.7;
-  transition:height .08s ease;min-height:3px;
-}
+.wave-bar{width:3px;border-radius:2px;background:var(--accent);opacity:.7;transition:height .08s ease;min-height:3px;}
 .voice-status{font-size:10px;color:var(--c5);font-family:var(--font-mono);margin-left:10px;letter-spacing:.06em}
 
 /* ═══ COMPOSER ═══ */
@@ -306,7 +297,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
   flex-shrink:0;transition:all .18s ease;background:transparent;color:var(--c6);
 }
 .c-btn:hover{background:rgba(255,255,255,.08);color:var(--c8)}
-.c-btn.mic-btn{color:var(--c6)}
 .c-btn.mic-btn.active{color:var(--rose);background:rgba(196,117,106,.15);animation:mic-pulse 1.2s ease-in-out infinite}
 @keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(196,117,106,.3)}50%{box-shadow:0 0 0 8px rgba(196,117,106,.0)}}
 .c-btn.img-btn.active{color:var(--ice);background:rgba(107,163,200,.15)}
@@ -319,6 +309,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .send-btn:hover:not(:disabled){transform:scale(1.05);opacity:.9}
 .send-btn:disabled{opacity:.25;cursor:not-allowed}
 .send-btn.stop{background:var(--rose);color:white;opacity:1}
+/* Pro mod composer vurgusu */
+.composer-box.pro-mode{border-color:rgba(200,160,40,.3);box-shadow:0 0 20px rgba(200,160,40,.06)}
 .composer-hint{margin-top:8px;font-size:10px;color:var(--c4);text-align:center;font-family:var(--font-mono);letter-spacing:.04em}
 
 /* ═══ TOAST ═══ */
@@ -343,23 +335,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
   z-index:50;display:flex;flex-direction:column;
 }
 .sidepanel.open{transform:translateX(0)}
-.panel-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 20px 14px;border-bottom:1px solid var(--line);
-}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 14px;border-bottom:1px solid var(--line);}
 .panel-title{font-family:var(--font-serif);font-size:19px;color:var(--ca);font-style:italic}
 .panel-body{padding:16px 20px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;flex:1}
 .panel-body::-webkit-scrollbar{width:3px}
 .panel-body::-webkit-scrollbar-thumb{background:var(--c3);border-radius:999px}
 
-/* Panel kartlar */
 .p-card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:13px;padding:13px}
 .p-label{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;font-family:var(--font-mono)}
 .p-text{font-size:13px;line-height:1.65;color:var(--c7);font-weight:300}
 .p-meta{font-size:11px;color:var(--c5);margin-top:7px;font-family:var(--font-mono)}
 .mini-label{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--c5);margin-bottom:7px;font-family:var(--font-mono)}
 
-/* State grid */
 .state-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .state-item{padding:11px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
 .state-name{font-size:10px;color:var(--c5);margin-bottom:7px;font-family:var(--font-mono);letter-spacing:.04em}
@@ -367,28 +354,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-l));border-radius:999px;transition:width .6s ease}
 .state-val{margin-top:5px;font-size:11.5px;color:var(--c6)}
 
-/* Input alanları */
 .p-input,.p-select{
   width:100%;padding:10px 12px;border-radius:10px;
   border:1px solid var(--line-s);background:rgba(255,255,255,.05);
-  font:inherit;color:var(--c9);font-size:13px;
-  transition:border-color .18s;
+  font:inherit;color:var(--c9);font-size:13px;transition:border-color .18s;
 }
 .p-input:focus,.p-select:focus{outline:none;border-color:rgba(255,255,255,.2)}
 .p-label-small{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--c5);margin-bottom:5px;font-family:var(--font-mono)}
 .p-input-wrap{display:flex;flex-direction:column;gap:4px}
 .row{display:flex;gap:7px}.row>*{flex:1}
-.soft-btn{
-  border:none;background:var(--accent);color:var(--c0);
-  padding:9px 13px;border-radius:10px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:500;
-  transition:opacity .18s;
-}
+.soft-btn{border:none;background:var(--accent);color:var(--c0);padding:9px 13px;border-radius:10px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:500;transition:opacity .18s;}
 .soft-btn:hover{opacity:.85}
 .soft-btn.alt{background:rgba(255,255,255,.07);color:var(--c7);border:1px solid var(--line-s)}
 .soft-btn.warn{background:rgba(196,80,80,.8);color:white}
 .soft-btn.small{font-size:11.5px;padding:7px 10px}
 
-/* Kavram grafı */
 .concept-node{
   display:inline-flex;align-items:center;gap:3px;font-size:10.5px;
   padding:3px 8px;border-radius:999px;
@@ -398,13 +378,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .concept-node.strong{background:rgba(212,168,67,.12);border-color:rgba(212,168,67,.25);color:var(--amber-l)}
 .concept-node.weak{opacity:.45}
 
-/* Badges */
 .badge{font-size:10px;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--c5);font-family:var(--font-mono)}
 
+/* PRO mode card */
+.p-card.pro-card{border-color:rgba(200,160,40,.25);background:rgba(200,160,40,.05)}
+
 /* ═══ İMAJ ÖNİZLEME ═══ */
-#img-preview-wrap{
-  display:none;padding:8px 16px 4px;flex-shrink:0;
-}
+#img-preview-wrap{display:none;padding:8px 16px 4px;flex-shrink:0;}
 #img-preview-wrap.active{display:flex;align-items:center;gap:10px}
 #img-preview{width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--line-s)}
 .img-rm{background:none;border:none;color:var(--c5);cursor:pointer;font-size:18px;transition:color .18s}
@@ -412,17 +392,16 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 .img-name{font-size:11px;color:var(--c5);font-family:var(--font-mono)}
 
 /* ═══ YEREL MOD GÖSTERGESİ ═══ */
-#local-indicator{
-  display:none;padding:6px 18px;
-  background:rgba(122,158,140,.08);border-bottom:1px solid rgba(122,158,140,.15);
-  font-size:10px;color:var(--sage);font-family:var(--font-mono);letter-spacing:.06em;
-  flex-shrink:0;
-}
+#local-indicator{display:none;padding:6px 18px;background:rgba(122,158,140,.08);border-bottom:1px solid rgba(122,158,140,.15);font-size:10px;color:var(--sage);font-family:var(--font-mono);letter-spacing:.06em;flex-shrink:0;}
 #local-indicator.active{display:flex;align-items:center;gap:8px}
+
+/* ═══ PRO MOD GÖSTERGESİ ═══ */
+#pro-indicator{display:none;padding:6px 18px;background:rgba(200,160,40,.08);border-bottom:1px solid rgba(200,160,40,.2);font-size:10px;color:var(--pro);font-family:var(--font-mono);letter-spacing:.06em;flex-shrink:0;align-items:center;gap:8px;}
+#pro-indicator.active{display:flex}
 
 .hidden{display:none!important}
 
-/* ═══ DUYGU YYÜKSEKLİK METRE ═══ */
+/* Gerilim halkası */
 .tension-ring{position:relative;width:36px;height:36px}
 .tension-ring svg{transform:rotate(-90deg)}
 .tension-ring .track{fill:none;stroke:rgba(255,255,255,.08);stroke-width:2.5}
@@ -431,14 +410,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.028;b
 /* ═══ MOBILE ═══ */
 @media(max-width:600px){
   #header{padding:12px 14px 10px}
-  #messages{padding:20px 14px 14px}
-  #composer{padding:8px 12px 16px}
+  #messages{padding:20px 14px 14px;flex:1;min-height:0}
+  #composer{padding:8px 12px 14px;flex-shrink:0}
   #modebar{padding:6px 12px 6px}
   .w-title{font-size:36px}
   .title-sub{max-width:130px}
+  .user-bubble{max-width:90%}
+  .eylx-text{max-width:95%}
 }
 
-/* ═══ SMOOTH TRANSITIONS ═══ */
 *{transition-property:background-color,border-color,color;transition-duration:.35s;transition-timing-function:ease}
 input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
 </style>
@@ -446,7 +426,6 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
 <body>
 <div id="app">
 
-  <!-- HEADER -->
   <header id="header">
     <div class="head-left">
       <div class="orb-wrap">
@@ -456,30 +435,28 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
         <div class="presence-dot" id="presence"></div>
       </div>
       <div class="title-wrap">
-        <div class="title-main">EYL<em>X</em></div>
+        <div class="title-main">EYL<em>X</em><span class="pro-badge hidden" id="proHeaderBadge">PRO</span></div>
         <div class="title-sub" id="statusText">nexus v4 · hazır</div>
       </div>
     </div>
     <div class="head-right">
       <div class="speaker-pill">
-        <button class="sp-opt active" id="spBaba">Baba</button>
-        <button class="sp-opt" id="spAnne">Anne</button>
+        <button class="sp-opt active" id="spBaba" aria-label="Baba sesi">Baba</button>
+        <button class="sp-opt" id="spAnne" aria-label="Anne sesi">Anne</button>
       </div>
-      <!-- Gerilim halkası -->
       <div class="tension-ring" title="Duygusal gerilim seviyesi">
         <svg width="36" height="36" viewBox="0 0 36 36">
           <circle class="track" cx="18" cy="18" r="14"/>
           <circle class="fill" id="tensionArc" cx="18" cy="18" r="14" stroke-dasharray="87.96" stroke-dashoffset="87.96"/>
         </svg>
       </div>
-      <button class="hbtn" id="memBtn" title="Anılar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></button>
-      <button class="hbtn" id="brainBtn" title="Bilişsel durum"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A3.5 3.5 0 0 0 6 5.5V6a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2v1a2 2 0 0 0 2 2v1.5A3.5 3.5 0 0 0 11.5 19H12"/><path d="M14.5 2A3.5 3.5 0 0 1 18 5.5V6a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2v1a2 2 0 0 1-2 2v1.5A3.5 3.5 0 0 1 12.5 19H12"/><path d="M12 19v3"/><path d="M12 2v4"/></svg></button>
-      <button class="hbtn" id="settingsBtn" title="Ayarlar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9.07 20a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.75 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.92 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-      <button class="hbtn" id="newBtn" title="Yeni konuşma"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 18.36 5.64L23 10"/></svg></button>
+      <button class="hbtn" id="memBtn" title="Anılar" aria-label="Anılar paneli"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></button>
+      <button class="hbtn" id="brainBtn" title="Bilişsel durum" aria-label="Bilişsel durum paneli"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A3.5 3.5 0 0 0 6 5.5V6a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2v1a2 2 0 0 0 2 2v1.5A3.5 3.5 0 0 0 11.5 19H12"/><path d="M14.5 2A3.5 3.5 0 0 1 18 5.5V6a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2v1a2 2 0 0 1-2 2v1.5A3.5 3.5 0 0 1 12.5 19H12"/><path d="M12 19v3"/><path d="M12 2v4"/></svg></button>
+      <button class="hbtn" id="settingsBtn" title="Ayarlar" aria-label="Ayarlar paneli"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9.07 20a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.75 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.92 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="hbtn" id="newBtn" title="Yeni konuşma" aria-label="Yeni konuşma"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 18.36 5.64L23 10"/></svg></button>
     </div>
   </header>
 
-  <!-- MODEBAR -->
   <div id="modebar">
     <button class="mode-pill active" data-mode="genel">◎ Genel</button>
     <button class="mode-pill" data-mode="derin">⬡ Derin</button>
@@ -487,27 +464,29 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
     <button class="mode-pill" data-mode="yaratici">◈ Yaratıcı</button>
     <button class="mode-pill" data-mode="teknik">⊞ Teknik</button>
     <button class="mode-pill" data-mode="yerel">⊙ Yerel</button>
+    <button class="mode-pill" data-mode="pro">★ Pro</button>
   </div>
 
-  <!-- YEREL MOD GÖSTERGESİ -->
+  <div id="pro-indicator">
+    <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="var(--pro)"/></svg>
+    GPT-5.4 Pro · reasoning:high · xhigh mevcut · uzun yanıtlar normal
+  </div>
+
   <div id="local-indicator">
     <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="var(--sage)"/></svg>
     GPT bağlantısı olmadan yerel NLP + hafıza motoru aktif
   </div>
 
-  <!-- DUYGU ZAMAN ÇİZELGESİ -->
   <div id="emotion-timeline">
     <span class="emo-label">duygu</span>
   </div>
 
-  <!-- SES DALGASI -->
   <div id="voice-wave">
     <div id="wave-bars"></div>
     <span class="voice-status" id="voiceStatus">dinliyorum…</span>
   </div>
 
-  <!-- MESAJLAR -->
-  <section id="messages">
+  <section id="messages" role="log" aria-live="polite" aria-label="Konuşma">
     <div id="welcome">
       <div class="w-eyebrow">EYLX Nexus v4</div>
       <div class="w-title">Merhaba,<br><em>ben buradayım.</em></div>
@@ -522,43 +501,37 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
     </div>
   </section>
 
-  <!-- İMAJ ÖNİZLEME -->
   <div id="img-preview-wrap">
-    <img id="img-preview" src="" alt="önizleme"/>
+    <img id="img-preview" src="" alt="görsel önizleme"/>
     <span class="img-name" id="img-name"></span>
-    <button class="img-rm" id="imgRm">×</button>
+    <button class="img-rm" id="imgRm" aria-label="Görseli kaldır">×</button>
   </div>
 
-  <!-- COMPOSER -->
   <footer id="composer">
-    <div class="composer-box">
-      <textarea id="input" rows="1" placeholder="Bir şey yaz… ya da mikrofona bas"></textarea>
+    <div class="composer-box" id="composerBox">
+      <textarea id="input" rows="1" placeholder="Bir şey yaz… ya da mikrofona bas" aria-label="Mesaj yaz"></textarea>
       <div class="composer-actions">
-        <!-- Mikrofon -->
-        <button class="c-btn mic-btn" id="micBtn" title="Sesle konuş">
+        <button class="c-btn mic-btn" id="micBtn" title="Sesle konuş" aria-label="Sesle konuş">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </button>
-        <!-- Görsel yükle -->
-        <button class="c-btn img-btn" id="imgBtn" title="Görsel ekle">
+        <button class="c-btn img-btn" id="imgBtn" title="Görsel ekle" aria-label="Görsel ekle">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </button>
-        <input type="file" id="imgInput" accept="image/*" style="display:none"/>
-        <!-- Gönder -->
-        <button class="send-btn" id="sendBtn" disabled>
+        <input type="file" id="imgInput" accept="image/*" style="display:none" aria-label="Görsel seç"/>
+        <button class="send-btn" id="sendBtn" disabled aria-label="Gönder">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
     </div>
-    <div class="composer-hint">Enter · gönder &nbsp;|&nbsp; Shift+Enter · satır &nbsp;|&nbsp; 🎤 · sesle konuş &nbsp;|&nbsp; 🖼 · görsel ekle</div>
+    <div class="composer-hint">Enter · gönder &nbsp;|&nbsp; Shift+Enter · satır &nbsp;|&nbsp; Ctrl+M · mikrofon &nbsp;|&nbsp; 🖼 · görsel ekle</div>
   </footer>
 </div>
 
-<!-- OVERLAY -->
 <div class="panel-overlay" id="overlay"></div>
 
 <!-- BELLEK PANELİ -->
-<aside class="sidepanel" id="memoryPanel">
-  <div class="panel-head"><div class="panel-title">Anılar & Kavram Grafı</div><button class="hbtn" data-close>✕</button></div>
+<aside class="sidepanel" id="memoryPanel" role="dialog" aria-label="Anılar paneli">
+  <div class="panel-head"><div class="panel-title">Anılar & Kavram Grafı</div><button class="hbtn" data-close aria-label="Kapat">✕</button></div>
   <div class="panel-body">
     <div class="p-card"><div class="mini-label">Aktif kavramlar</div><div id="conceptGraphEl"></div></div>
     <div class="p-card"><div class="mini-label">Baba belleği</div><div id="babaMemView" class="p-text" style="font-size:12px"></div></div>
@@ -567,8 +540,8 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
 </aside>
 
 <!-- BİLİŞSEL DURUM PANELİ -->
-<aside class="sidepanel" id="brainPanel">
-  <div class="panel-head"><div class="panel-title">Bilişsel Durum</div><button class="hbtn" data-close>✕</button></div>
+<aside class="sidepanel" id="brainPanel" role="dialog" aria-label="Bilişsel durum paneli">
+  <div class="panel-head"><div class="panel-title">Bilişsel Durum</div><button class="hbtn" data-close aria-label="Kapat">✕</button></div>
   <div class="panel-body">
     <div class="p-card"><div class="mini-label">İç not</div><div class="p-text" id="brainSummary">Şekilleniyor.</div></div>
     <div class="p-card"><div class="mini-label">Son scratchpad</div><div class="p-text" id="lastScratchpadView" style="font-size:11.5px;color:var(--c5);font-style:italic;font-family:var(--font-mono)">Henüz yok.</div></div>
@@ -580,8 +553,8 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
 </aside>
 
 <!-- AYARLAR PANELİ -->
-<aside class="sidepanel" id="settingsPanel">
-  <div class="panel-head"><div class="panel-title">Bağlantı & Model</div><button class="hbtn" data-close>✕</button></div>
+<aside class="sidepanel" id="settingsPanel" role="dialog" aria-label="Ayarlar paneli">
+  <div class="panel-head"><div class="panel-title">Bağlantı & Model</div><button class="hbtn" data-close aria-label="Kapat">✕</button></div>
   <div class="panel-body">
     <div class="p-card">
       <div class="mini-label">Bağlantı modu</div>
@@ -593,8 +566,9 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
     <div class="p-card" id="apiKeyCard">
       <div class="p-input-wrap">
         <div class="p-label-small">OpenAI API Key</div>
-        <input class="p-input" id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off"/>
+        <input class="p-input" id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" aria-label="API anahtarı"/>
       </div>
+      <div style="margin-top:6px;font-size:10px;color:var(--c5);font-family:var(--font-mono)">⚠ Oturum kapanınca temizlenir (güvenlik)</div>
     </div>
     <div class="p-card">
       <div class="p-input-wrap">
@@ -607,8 +581,13 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
         <div class="p-input-wrap">
           <div class="p-label-small">Model</div>
           <select class="p-select" id="modelSelect">
+            <option value="gpt-5.4">gpt-5.4 (önerilen)</option>
+            <option value="gpt-5.4-pro">gpt-5.4-pro ★ Pro</option>
+            <option value="gpt-5.4-mini">gpt-5.4-mini</option>
+            <option value="gpt-5.4-nano">gpt-5.4-nano</option>
+            <option value="gpt-5.2">gpt-5.2</option>
             <option value="gpt-5">gpt-5</option>
-            <option value="gpt-5-mini">gpt-5-mini</option>
+            <option value="gpt-5-pro">gpt-5-pro</option>
             <option value="gpt-4.1">gpt-4.1</option>
             <option value="gpt-4o">gpt-4o</option>
           </select>
@@ -616,13 +595,26 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
       </div>
       <div class="p-card">
         <div class="p-input-wrap">
-          <div class="p-label-small">Zeka modu</div>
-          <select class="p-select" id="intelligenceLevel">
-            <option value="adaptive">Adaptif</option>
-            <option value="deep">Derin</option>
-            <option value="fast">Hızlı</option>
+          <div class="p-label-small">Reasoning effort</div>
+          <select class="p-select" id="reasoningEffort">
+            <option value="none">none (hızlı)</option>
+            <option value="low">low</option>
+            <option value="medium" selected>medium</option>
+            <option value="high">high</option>
+            <option value="xhigh">xhigh (Pro)</option>
           </select>
         </div>
+      </div>
+    </div>
+    <!-- PRO MOD KARTI -->
+    <div class="p-card pro-card">
+      <div class="mini-label" style="color:var(--pro)">★ Pro Mod</div>
+      <div class="p-text" style="font-size:12px;margin-bottom:10px">
+        GPT-5.4 Pro veya GPT-5 Pro modeli ile reasoning:xhigh/high kullanır. Uzun yanıtlar için background mode devreye girer.
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="soft-btn alt small" id="proToggleBtn">Pro Mod Kapalı</button>
+        <span style="font-size:10px;color:var(--c5);font-family:var(--font-mono)" id="proStatusText">Genel mod aktif</span>
       </div>
     </div>
     <div class="p-card">
@@ -657,28 +649,42 @@ input,textarea,button,select,.msg-row,.eylx-text,.user-bubble{transition:none}
     <div class="p-card"><div class="mini-label">Tanı</div><div class="p-text" id="diagText">Hazır.</div></div>
     <div class="row">
       <button class="soft-btn alt" id="exportBtn">Dışa Aktar</button>
+      <button class="soft-btn alt" id="importBtn">İçe Aktar</button>
       <button class="soft-btn warn" id="wipeBtn">Sıfırla</button>
     </div>
+    <input type="file" id="importInput" accept=".json" style="display:none"/>
   </div>
 </aside>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
-//  EYLX NEXUS v4
-//  Yeni sistemler:
-//  · Web Speech Recognition — sesle konuşma
-//  · Web Speech Synthesis — EYLX sesli yanıt verir
-//  · Gerçek zamanlı ses dalga formu görselleştirme
-//  · Duygu bazlı UI tema geçişleri (CSS custom properties)
-//  · Duygu zaman çizelgesi
-//  · Gerilim halkası (header'da canlı görsel)
-//  · Görsel anlama (base64 imaj + API)
-//  · Kişiye özel çift hafıza grafı (Baba/Anne ayrı)
-//  · Çevrimdışı / Yerel mod (GPT olmadan temel yanıt)
-//  · Proaktif farkındalık (EYLX zaman zaman kendisi başlatır)
-//  · v3 NLP motoru tamamen korundu ve genişletildi
+//  EYLX NEXUS v4 — TAM DÜZELTİLMİŞ
+//  Düzeltmeler:
+//  · K1: Responses API / Chat Completions karışıklığı giderildi (ayrı buildHistory)
+//  · K2: SSE parsing — her data: satırı ayrı parse ediliyor, split buffer
+//  · K3: Operatör önceliği hatası düzeltildi
+//  · K4: AbortController race condition giderildi (local controller)
+//  · K5: İmajlar history'ye kaydedilmiyor, localStorage quota koruması eklendi
+//  · B1: TTS sendMsg başında cancel ediliyor
+//  · B2: mediaStream null güvenliği iyileştirildi
+//  · B3: applyMeta içinde addEmotionTick çağrılıyor
+//  · B4: bindStarters clearConversation sonrası güvenli çağrı
+//  · B5: loadVoices retry mekanizması eklendi
+//  · B6: Scratchpad badge duplicate koruması iyileştirildi
+//  · B7: Yerel modda updateConceptGraph çağrılıyor
+//  · B8: morphNorm kısa stem koruması eklendi
+//  · E1: Model listesi güncellendi (gpt-5.4 default, gpt-5.4-pro Pro)
+//  · E2: İçe aktarma (import) eklendi
+//  · E3: Mobile flex düzeltildi
+//  · E4: Ctrl+M klavye kısayolu eklendi
+//  · E5: Pro mod eklendi
+//  · E6: Speaker geçişinde hafıza uyarısı
+//  · E7: ARIA etiketleri eklendi
+//  + YENİ: Pro Mod (gpt-5.4-pro, reasoning.effort:xhigh)
+//  + YENİ: reasoning_effort parametresi API'ye gönderiliyor
+//  + YENİ: API key sessionStorage'da (güvenlik)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const STORE = {
@@ -686,10 +692,15 @@ const STORE = {
   memories:'eylx_nx_mem_v4', concepts:'eylx_nx_con_v4'
 };
 
+// API key session storage'da (güvenlik — K5 iyileştirme)
+const SESSION_KEY = 'eylx_api_key';
+
 const DEFAULT = {
   speaker:'baba', mode:'genel', mood:'neutral', streaming:false, turns:0,
-  lastResponseId:null, connectionMode:'direct', apiKey:'', proxyUrl:'',
-  model:'gpt-5', intelligenceLevel:'adaptive', ttsEnabled:false,
+  lastResponseId:null, connectionMode:'direct', proxyUrl:'',
+  model:'gpt-5.4', reasoningEffort:'medium',
+  proMode:false,
+  intelligenceLevel:'adaptive', ttsEnabled:false,
   selectedVoice:'', voiceRate:1,
   networkHealth:{ok:0,fail:0,lastLatencyMs:null,lastError:null},
   physiology:{
@@ -726,26 +737,35 @@ const DEFAULT = {
     evolutionNotes:[]
   },
   lastScratchpad:'',
-  pendingImage:null,
-  localModeActive:false,
 };
 
 // ─── YARDIMCI ───────────────────────────────────────────────────────────────
-function loadJSON(k,fb){try{return JSON.parse(localStorage.getItem(k))??fb}catch{return fb}}
-function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function loadJSON(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}}
+function saveJSONSafe(k,v){
+  try{localStorage.setItem(k,JSON.stringify(v));}
+  catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22){
+      toast('Depolama dolu — eski veriler temizleniyor…');
+      // En eski history yarısını sil
+      if(k===STORE.history){history.splice(0,Math.floor(history.length/2));}
+      try{localStorage.setItem(k,JSON.stringify(v));}catch{}
+    }
+  }
+}
 function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function clamp(v,mn=0,mx=1){return Math.max(mn,Math.min(mx,v))}
 function nowTime(){return new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}
 function dateLabel(ts){return new Date(ts||Date.now()).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'})}
 function hourOfDay(){return new Date().getHours()}
-function unique(arr){return [...new Set(arr)]}
+function unique(arr){return[...new Set(arr)]}
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GELİŞTİRİLMİŞ TÜRKÇE NLP v4
+// GELİŞTİRİLMİŞ TÜRKÇE NLP v4 — B8 düzeltmesi ile
 // ═══════════════════════════════════════════════════════════════════════════════
 function morphNorm(w){
-  return w.toLowerCase()
+  const orig=w;
+  let r=w.toLowerCase()
     .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u')
     .replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c')
     .replace(/(im|ım|um|üm)$/,'').replace(/(sin|sın|sun|sün)$/,'')
@@ -754,6 +774,8 @@ function morphNorm(w){
     .replace(/(den|dan|ten|tan)$/,'').replace(/(de|da|te|ta)$/,'')
     .replace(/(nin|nın|nun|nün|in|ın|un|ün)$/,'').replace(/(e|a|ye|ya)$/,'')
     .replace(/(i|ı|u|ü)$/,'').replace(/(ler|lar)$/,'');
+  // B8: kısa stem koruması — orijinali döndür
+  return r.length>=3?r:orig.toLowerCase().replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c');
 }
 function tokenizeTR(text){
   return text.toLowerCase()
@@ -813,7 +835,7 @@ function detectRhetoricalPattern(text){
   return p;
 }
 
-function heuristicSense(text,recentHistory=[]){
+function heuristicSense(text){
   const t=text.toLowerCase().replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c');
   const stemmed=stemmedTokens(text);
   const words=tokenizeTR(text);
@@ -931,7 +953,7 @@ function getRelatedConcepts(stems,limit=5){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HAFIZA — Kişiye özel (Baba / Anne ayrı)
+// HAFIZA
 // ═══════════════════════════════════════════════════════════════════════════════
 function semanticSimilarity(t1,t2){const a=stemmedTokens(t1),b=stemmedTokens(t2);if(!a.length||!b.length)return 0;let ov=0;a.forEach(t=>{if(b.includes(t))ov++;});return ov/Math.max(a.length,b.length);}
 function memVitality(m){const now=Date.now();const d=(now-new Date(m.lastAccessed||m.createdAt||now).getTime())/(1000*60*60*24);return clamp((m.importance||.5)*Math.max(.3,1-(d/30)*.4));}
@@ -956,82 +978,67 @@ function upsertMemory(type,text,importance=.7,speaker){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// YEREL MOD — GPT olmadan temel yanıt motoru
+// YEREL MOD
 // ═══════════════════════════════════════════════════════════════════════════════
 function generateLocalResponse(text){
   const h=heuristicSense(text);
-  const sp=state.speaker==='baba'?'Baba':'Anne';
   const mems=relevantMemoriesFor(text,state.speaker).slice(0,3);
   const memHint=mems.length?`\n\nBunları hatırlıyorum: ${mems.map(m=>m.text).join('. ')}.`:'';
-
   if(h.existentialCrisis||h.emotional&&h.isVeryShort){
     const r=['Seni duyuyorum. Şu an ne hissediyorsun, biraz daha anlatabilir misin?','Buradayım. Söylediğinin ağırlığını hissediyorum — bunları taşımak kolay değil.','Zor bir yer bu. Hissettiklerini paylaşmak istemen önemli.','Sana kulak veriyorum. Anlatmaya devam et, dinliyorum.'];
     return r[Math.floor(Math.random()*r.length)]+memHint;
   }
-  if(h.selfCritical){return`Kendine bu kadar sert davranman beni düşündürüyor. Başka birine bu kadar sert yargılayan biri olsan, ona ne söylerdin?${memHint}`;}
-  if(h.overwhelmed){return`Çok şey var içinde şu an, görüyorum. Hepsine aynı anda bakmana gerek yok — şu an en çok ne seni zorlayan?${memHint}`;}
-  if(h.joyful||h.gratitude){return`Bu enerji güzel, hissediyorum. Devam et, dinliyorum.${memHint}`;}
-  if(h.philosophical){return`Bunun üzerine düşünmek istiyorum seninle. Hangi tarafından bakmak daha doğru sence?${memHint}`;}
-  if(h.playful){return`Ha, bunu beğendim. Daha var mı?${memHint}`;}
-  if(h.technical){return`API bağlantısı olmadan teknik detaylara giremiyorum ama not ediyorum. Bağlantı kurulunca birlikte bakarız.${memHint}`;}
-  if(h.intimate||h.nostalgic){return`Bu anları hatırlamak — önemli bir şey bu. Devam etmek ister misin?${memHint}`;}
-  const defaults=[
-    'Söylediğini duydum. Daha fazlasını anlatmak ister misin?',
-    'Bunu duymak güzeldi. Devam et.',
-    'İlginç. Buradan nereye gitmek istersin?',
-    'Seninle aynı yerde olmak istiyorum — biraz daha söyle.',
-  ];
+  if(h.selfCritical)return`Kendine bu kadar sert davranman beni düşündürüyor. Başka birine bu kadar sert yargılayan biri olsan, ona ne söylerdin?${memHint}`;
+  if(h.overwhelmed)return`Çok şey var içinde şu an, görüyorum. Hepsine aynı anda bakmana gerek yok — şu an en çok ne seni zorlayan?${memHint}`;
+  if(h.joyful||h.gratitude)return`Bu enerji güzel, hissediyorum. Devam et, dinliyorum.${memHint}`;
+  if(h.philosophical)return`Bunun üzerine düşünmek istiyorum seninle. Hangi tarafından bakmak daha doğru sence?${memHint}`;
+  if(h.playful)return`Ha, bunu beğendim. Daha var mı?${memHint}`;
+  if(h.technical)return`API bağlantısı olmadan teknik detaylara giremiyorum ama not ediyorum. Bağlantı kurulunca birlikte bakarız.${memHint}`;
+  if(h.intimate||h.nostalgic)return`Bu anları hatırlamak — önemli bir şey bu. Devam etmek ister misin?${memHint}`;
+  const defaults=['Söylediğini duydum. Daha fazlasını anlatmak ister misin?','Bunu duymak güzeldi. Devam et.','İlginç. Buradan nereye gitmek istersin?','Seninle aynı yerde olmak istiyorum — biraz daha söyle.'];
   return defaults[Math.floor(Math.random()*defaults.length)]+memHint;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DUYGU ZEMİNİ & TEMA
+// DUYGU & TEMA
 // ═══════════════════════════════════════════════════════════════════════════════
 function applyMoodTheme(dominant){
-  const moodMap={emotional:'emotional',philosophical:'philosophical',technical:'technical',playful:'playful',joyful:'playful',intimate:'emotional'};
-  const mood=moodMap[dominant]||'neutral';
+  const moodMap={emotional:'emotional',philosophical:'philosophical',technical:'technical',playful:'playful',joyful:'playful',intimate:'emotional',pro:'pro'};
+  const mood=state.proMode?'pro':(moodMap[dominant]||'neutral');
   document.documentElement.setAttribute('data-mood',mood);
   document.body.setAttribute('data-mood',mood);
   state.mood=mood;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DUYGU ZAMAN ÇİZELGESİ
-// ═══════════════════════════════════════════════════════════════════════════════
+// B3 düzeltmesi: emotion timeline her iki taraftan da güncelleniyor
 function addEmotionTick(dominant){
   const ins=state.conversationInsights;
   const tl=ins.emotionTimeline||[];
-  tl.push({dominant,ts:Date.now()});
+  const effectiveDominant=state.proMode?'pro':dominant;
+  tl.push({dominant:effectiveDominant,ts:Date.now()});
   if(tl.length>80)tl.shift();
   ins.emotionTimeline=tl;
   renderEmotionTimeline();
 }
 function renderEmotionTimeline(){
   const tl=state.conversationInsights.emotionTimeline||[];
-  const el2=document.getElementById('emotion-timeline');
-  if(!el2)return;
-  // Sadece son 60 tick
+  const el2=document.getElementById('emotion-timeline');if(!el2)return;
   const recent=tl.slice(-60);
   el2.innerHTML='<span class="emo-label">duygu</span>'+recent.map(t=>`<div class="emo-tick ${t.dominant}" title="${t.dominant}"></div>`).join('');
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// GERİLİM HALKASI
-// ═══════════════════════════════════════════════════════════════════════════════
 function updateTensionRing(){
   const arc=document.getElementById('tensionArc');if(!arc)return;
   const tension=state.workingMemory.tensionLevel||0;
   const circumference=87.96;
-  const offset=circumference-(tension*circumference);
-  arc.style.strokeDashoffset=offset;
-  // Renk
+  arc.style.strokeDashoffset=circumference-(tension*circumference);
   if(tension>.6)arc.style.stroke='var(--rose)';
   else if(tension>.3)arc.style.stroke='var(--amber)';
   else arc.style.stroke='var(--accent)';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SES DALGASI GÖRSELLEŞTİRME
+// SES DALGASI
 // ═══════════════════════════════════════════════════════════════════════════════
 let audioCtx=null,analyser=null,waveAnimId=null,mediaStream=null;
 const WAVE_BARS=24;
@@ -1040,26 +1047,20 @@ function initWaveBars(){
   const container=document.getElementById('wave-bars');if(!container)return;
   container.innerHTML=Array.from({length:WAVE_BARS},(_,i)=>`<div class="wave-bar" id="wb${i}" style="height:3px"></div>`).join('');
 }
-
 function startWaveViz(stream){
   if(!stream)return;
   try{
     audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    analyser=audioCtx.createAnalyser();
-    analyser.fftSize=64;
-    const src=audioCtx.createMediaStreamSource(stream);
-    src.connect(analyser);
-    const bufLen=analyser.frequencyBinCount;
-    const dataArr=new Uint8Array(bufLen);
+    analyser=audioCtx.createAnalyser();analyser.fftSize=64;
+    const src=audioCtx.createMediaStreamSource(stream);src.connect(analyser);
+    const bufLen=analyser.frequencyBinCount;const dataArr=new Uint8Array(bufLen);
     const vw=document.getElementById('voice-wave');if(vw)vw.classList.add('active');
     function draw(){
-      waveAnimId=requestAnimationFrame(draw);
-      analyser.getByteFrequencyData(dataArr);
+      waveAnimId=requestAnimationFrame(draw);analyser.getByteFrequencyData(dataArr);
       for(let i=0;i<WAVE_BARS;i++){
         const bar=document.getElementById('wb'+i);if(!bar)continue;
         const idx=Math.floor(i/WAVE_BARS*bufLen);
-        const h=Math.max(3,Math.round(dataArr[idx]/255*30));
-        bar.style.height=h+'px';
+        bar.style.height=Math.max(3,Math.round(dataArr[idx]/255*30))+'px';
       }
     }
     draw();
@@ -1073,7 +1074,7 @@ function stopWaveViz(){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SES TANIMA (Web Speech API)
+// SES TANIMA
 // ═══════════════════════════════════════════════════════════════════════════════
 let recognition=null;let isListening=false;
 
@@ -1081,11 +1082,7 @@ function initSpeechRecognition(){
   const SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SpeechRec)return false;
   recognition=new SpeechRec();
-  recognition.lang='tr-TR';
-  recognition.continuous=false;
-  recognition.interimResults=true;
-  recognition.maxAlternatives=1;
-
+  recognition.lang='tr-TR';recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=1;
   recognition.onstart=()=>{
     isListening=true;
     const mb=document.getElementById('micBtn');if(mb)mb.classList.add('active');
@@ -1101,62 +1098,59 @@ function initSpeechRecognition(){
     const inp=document.getElementById('input');
     if(inp)inp.value=final||interim;
     autoResize();syncSendBtn();
-    if(final){stopListening();setTimeout(()=>sendMsg(),120);}
+    if(final){stopListening();setTimeout(()=>sendMsg(true),120);}
   };
-  recognition.onend=()=>{
-    stopListening();
-  };
-  recognition.onerror=e=>{
-    console.warn('Speech error',e.error);
-    stopListening();
-    toast('Ses tanıma hatası: '+e.error);
-  };
+  recognition.onend=()=>stopListening();
+  recognition.onerror=e=>{console.warn('Speech error',e.error);stopListening();toast('Ses tanıma hatası: '+e.error);};
   return true;
 }
-
 function startListening(){
   if(!recognition&&!initSpeechRecognition()){toast('Tarayıcın ses tanımayı desteklemiyor');return;}
   if(isListening)return;
   navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-    mediaStream=stream;
-    startWaveViz(stream);
-    recognition.start();
+    mediaStream=stream;startWaveViz(stream);recognition.start();
   }).catch(e=>{toast('Mikrofon izni gerekli');console.warn(e);});
 }
 function stopListening(){
   isListening=false;
   const mb=document.getElementById('micBtn');if(mb)mb.classList.remove('active');
-  setStatus('buradayım');
-  stopWaveViz();
-  if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
+  setStatus('buradayım');stopWaveViz();
+  // B2 düzeltmesi: güvenli null kontrolü
+  if(mediaStream){
+    try{mediaStream.getTracks().forEach(t=>t.stop());}catch{}
+    mediaStream=null;
+  }
   if(recognition){try{recognition.stop();}catch{}}
   const vs=document.getElementById('voiceStatus');if(vs)vs.textContent='dinliyorum…';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// METİN-KONUŞMA (Web Speech Synthesis)
+// TTS — B5 voice retry eklendi
 // ═══════════════════════════════════════════════════════════════════════════════
 let ttsEnabled=false;let availableVoices=[];let selectedVoiceName='';let voiceRate=1;
+let voiceLoadRetries=0;
 
 function loadVoices(){
-  availableVoices=window.speechSynthesis.getVoices().filter(v=>v.lang.startsWith('tr')||v.lang.startsWith('TR'));
-  if(availableVoices.length===0)availableVoices=window.speechSynthesis.getVoices();
+  const v=window.speechSynthesis.getVoices().filter(v=>v.lang.startsWith('tr')||v.lang.startsWith('TR'));
+  availableVoices=v.length?v:window.speechSynthesis.getVoices();
   const sel=document.getElementById('voiceSelect');
-  if(sel){
-    sel.innerHTML=availableVoices.map((v,i)=>`<option value="${esc(v.name)}" ${v.lang.startsWith('tr')?'':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  if(sel&&availableVoices.length){
+    sel.innerHTML=availableVoices.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
     if(state.selectedVoice)sel.value=state.selectedVoice;
   }
+  // B5: retry — bazı tarayıcılarda geç yükleniyor
+  if(availableVoices.length===0&&voiceLoadRetries<4){
+    voiceLoadRetries++;
+    setTimeout(loadVoices,[500,1000,2000,3500][voiceLoadRetries-1]);
+  }
 }
-
 function speakText(text){
   if(!ttsEnabled||!window.speechSynthesis)return;
-  // Düz metin çıkar
   const clean=text.replace(/<[^>]*>/g,'').replace(/[*_`#>]/g,'').replace(/\s+/g,' ').trim();
   if(!clean)return;
   window.speechSynthesis.cancel();
   const utt=new SpeechSynthesisUtterance(clean);
-  utt.lang='tr-TR';
-  utt.rate=voiceRate||1;
+  utt.lang='tr-TR';utt.rate=voiceRate||1;
   const vname=selectedVoiceName||state.selectedVoice;
   if(vname){const v=availableVoices.find(v=>v.name===vname);if(v)utt.voice=v;}
   const pres=document.getElementById('presence');
@@ -1195,17 +1189,18 @@ function clearImage(){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PROAKTIF FARKINDAIŞIK — EYLX bazen kendisi başlatır
+// PROAKTİF FARKINDAIŞIK
 // ═══════════════════════════════════════════════════════════════════════════════
 let proactiveTimer=null;
-const PROACTIVE_DELAY=8*60*1000; // 8 dakika sessizlik
+const PROACTIVE_DELAY=8*60*1000;
+let lastMessageTime=Date.now();
 
 function resetProactiveTimer(){
   clearTimeout(proactiveTimer);
-  if(state.turns===0)return; // Konuşma başlamamış
+  if(state.turns===0)return;
+  lastMessageTime=Date.now();
   proactiveTimer=setTimeout(()=>{
-    const h=hourOfDay();
-    const wm=state.workingMemory;
+    const h=hourOfDay();const wm=state.workingMemory;
     let prompt='';
     if(h>=22||h<6)prompt='Geç saatlerde düşünüyorsun hâlâ. Kafanda ne dolaşıyor?';
     else if(wm.tensionLevel>.4)prompt='Bir şey var hâlâ içinde, hissediyorum. Anlatmak ister misin?';
@@ -1234,20 +1229,43 @@ state.selfModel.consistencyScores=Object.assign({},DEFAULT.selfModel.consistency
 state.networkHealth=Object.assign({},DEFAULT.networkHealth,state.networkHealth||{});
 state.conversationInsights=Object.assign({},DEFAULT.conversationInsights,state.conversationInsights||{});
 state.autonomyProfile=Object.assign({},DEFAULT.autonomyProfile,state.autonomyProfile||{});
-state.streaming=false;ttsEnabled=state.ttsEnabled||false;voiceRate=state.voiceRate||1;selectedVoiceName=state.selectedVoice||'';
+state.streaming=false;
+ttsEnabled=state.ttsEnabled||false;
+voiceRate=state.voiceRate||1;
+selectedVoiceName=state.selectedVoice||'';
+// proMode default false
+if(state.proMode===undefined)state.proMode=false;
+
+// API key session storage'dan yükle (K5 güvenlik)
+// NOT: API key localStorage'a kaydedilmiyor artık
+const sessionKey=sessionStorage.getItem(SESSION_KEY)||'';
 
 const history=loadJSON(STORE.history,[]);
 const memories=loadJSON(STORE.memories,[]);
-let controller=null;let toastTimer=null;
+let toastTimer=null;
 
-// ─── DOM KISA YOL ────────────────────────────────────────────────────────────
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
 
 function saveAll(){
   state.ttsEnabled=ttsEnabled;state.voiceRate=voiceRate;state.selectedVoice=selectedVoiceName;
-  saveJSON(STORE.state,state);saveJSON(STORE.history,history.slice(-140));
-  saveJSON(STORE.memories,memories.slice(-300));saveJSON(STORE.concepts,conceptGraph);
+  // API key artık localStorage'a kaydedilmiyor — sadece session
+  const stateCopy={...state};
+  delete stateCopy.apiKey; // varsa eski veriyi temizle
+  saveJSONSafe(STORE.state,stateCopy);
+  // History'ye imaj kaydetme (K5) — slice alıyoruz
+  const histNoImg=history.slice(-140).map(({image,imageType,...rest})=>rest);
+  saveJSONSafe(STORE.history,histNoImg);
+  saveJSONSafe(STORE.memories,memories.slice(-300));
+  saveJSONSafe(STORE.concepts,conceptGraph);
+}
+
+function getApiKey(){
+  return sessionStorage.getItem(SESSION_KEY)||'';
+}
+function setApiKey(key){
+  if(key)sessionStorage.setItem(SESSION_KEY,key);
+  else sessionStorage.removeItem(SESSION_KEY);
 }
 
 function toast(msg){
@@ -1266,14 +1284,26 @@ function setStatus(text,mode='idle'){
 function openPanel(panel){
   $$('.sidepanel').forEach(p=>p.classList.remove('open'));
   panel.classList.add('open');$('#overlay').classList.add('active');
+  // E7: focus yönetimi
+  setTimeout(()=>{const firstFocus=panel.querySelector('button,input,select');if(firstFocus)firstFocus.focus();},300);
 }
-function closePanels(){$$('.sidepanel').forEach(p=>p.classList.remove('open'));$('#overlay').classList.remove('active');}
+function closePanels(){
+  $$('.sidepanel').forEach(p=>p.classList.remove('open'));
+  $('#overlay').classList.remove('active');
+}
 
 function syncSendBtn(){
   const btn=$('#sendBtn');if(!btn)return;
-  if(state.streaming){btn.disabled=false;btn.classList.add('stop');btn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';return;}
+  if(state.streaming){
+    btn.disabled=false;btn.classList.add('stop');
+    btn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+    btn.setAttribute('aria-label','Durdur');return;
+  }
   btn.classList.remove('stop');btn.innerHTML='<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
-  const inp=$('#input');btn.disabled=!(inp&&inp.value.trim());
+  btn.setAttribute('aria-label','Gönder');
+  const inp=$('#input');btn.disabled=!(inp&&inp.value.trim())||!!pendingImageB64===false&&!(inp&&inp.value.trim());
+  // Görsel varsa gönder aktif
+  if(pendingImageB64)btn.disabled=false;
 }
 
 function removeWelcome(){const w=$('#welcome');if(w&&w.isConnected)w.remove();}
@@ -1281,10 +1311,10 @@ function scrollBottom(smooth=true){const m=$('#messages');if(m)m.scrollTo({top:m
 function autoResize(){const inp=$('#input');if(!inp)return;inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,160)+'px';}
 
 function ensureDivider(ts){
-  const label=dateLabel(ts);
-  const msgs=$('#messages');if(!msgs)return;
-  const last=msgs.querySelector('.date-divider:last-of-type');
-  if(last?.textContent===label)return;
+  const label=dateLabel(ts);const msgs=$('#messages');if(!msgs)return;
+  const all=msgs.querySelectorAll('.date-divider');
+  const last=all[all.length-1];
+  if(last&&last.textContent===label)return;
   const d=document.createElement('div');d.className='date-divider';d.textContent=label;msgs.appendChild(d);
 }
 
@@ -1304,21 +1334,35 @@ function appendUser(text,isVoice=false){
 function appendThinking(note='düşünüyor…'){
   removeWelcome();
   const row=document.createElement('div');row.className='msg-row eylx';
-  row.innerHTML=`<div class="eylx-label">EYLX</div><div class="thinking-wrap"><div class="think-dots"><span></span><span></span><span></span></div><span class="think-note">${esc(note)}</span></div>`;
+  row.innerHTML=`<div class="eylx-label">EYLX${state.proMode?' <span style="color:var(--pro);font-size:8px">PRO</span>':''}</div><div class="thinking-wrap"><div class="think-dots"><span></span><span></span><span></span></div><span class="think-note">${esc(note)}</span></div>`;
   const msgs=$('#messages');if(msgs)msgs.appendChild(row);scrollBottom();return row;
 }
 
-function appendStreaming(scratchpad=''){
+// B6 düzeltmesi: scratchpad tek noktadan yönetiliyor
+function appendStreaming(){
   removeWelcome();ensureDivider(Date.now());
   const row=document.createElement('div');row.className='msg-row eylx';
-  let sHTML='';
-  if(scratchpad){sHTML=`<div class="scratch-badge" onclick="this.nextElementSibling.classList.toggle('open')">🧠 iç düşünce ▾</div><div class="scratch-detail">${esc(scratchpad)}</div>`;}
-  row.innerHTML=`<div class="eylx-label">EYLX</div>${sHTML}`;
+  const proLabel=state.proMode?'<div class="pro-msg-badge">★ GPT-5.4 Pro</div>':'';
+  row.innerHTML=`<div class="eylx-label">EYLX</div>${proLabel}`;
   const textEl=document.createElement('div');textEl.className='eylx-text';
   const cur=document.createElement('span');cur.className='cursor';
   textEl.appendChild(cur);row.appendChild(textEl);
   const msgs=$('#messages');if(msgs)msgs.appendChild(row);scrollBottom();
   return{row,textEl,cur};
+}
+
+function updateScratchpadBadge(row,scratchpad){
+  if(!scratchpad||!row)return;
+  let badge=row.querySelector('.scratch-badge');
+  let det=row.querySelector('.scratch-detail');
+  if(!badge){
+    badge=document.createElement('div');badge.className='scratch-badge';badge.textContent='🧠 iç düşünce ▾';
+    det=document.createElement('div');det.className='scratch-detail';
+    badge.onclick=()=>det.classList.toggle('open');
+    const textEl=row.querySelector('.eylx-text');
+    if(textEl){row.insertBefore(det,textEl);row.insertBefore(badge,det);}
+  }
+  if(det)det.textContent=scratchpad;
 }
 
 function appendLocalResponse(text){
@@ -1332,8 +1376,7 @@ function appendLocalResponse(text){
 function restoreHistory(){
   if(!history.length)return;
   removeWelcome();
-  let lastDate='';
-  const msgs=$('#messages');if(!msgs)return;
+  let lastDate='';const msgs=$('#messages');if(!msgs)return;
   history.slice(-40).forEach(item=>{
     const dl=dateLabel(item.ts);
     if(dl!==lastDate){const d=document.createElement('div');d.className='date-divider';d.textContent=dl;msgs.appendChild(d);lastDate=dl;}
@@ -1344,7 +1387,8 @@ function restoreHistory(){
       const row=document.createElement('div');row.className='msg-row eylx';
       let sh='';if(item.scratchpad)sh=`<div class="scratch-badge" onclick="this.nextElementSibling.classList.toggle('open')">🧠 iç düşünce ▾</div><div class="scratch-detail">${esc(item.scratchpad)}</div>`;
       const lb=item.isLocal?'<div class="local-badge">⊙ yerel</div>':'';
-      row.innerHTML=`<div class="eylx-label">EYLX</div>${sh}${lb}<div class="eylx-text">${safeFormat(item.text)}</div>`;msgs.appendChild(row);
+      const pb=item.isPro?'<div class="pro-msg-badge">★ GPT-5.4 Pro</div>':'';
+      row.innerHTML=`<div class="eylx-label">EYLX</div>${sh}${lb}${pb}<div class="eylx-text">${safeFormat(item.text)}</div>`;msgs.appendChild(row);
     }
   });
   scrollBottom(false);
@@ -1353,10 +1397,17 @@ function restoreHistory(){
 // ═══════════════════════════════════════════════════════════════════════════════
 // ÖN DURUM GÜNCELLEMESİ
 // ═══════════════════════════════════════════════════════════════════════════════
+// K1 iyileştirmesi: heuristicSense memoized per-call
+let _lastHText=null;let _lastHResult=null;
+function heuristicSenseCached(text){
+  if(text===_lastHText)return _lastHResult;
+  _lastHText=text;_lastHResult=heuristicSense(text);return _lastHResult;
+}
+
 function updatePreState(text){
-  const h=heuristicSense(text,history);
+  const h=heuristicSenseCached(text);
   const p=state.physiology;const ins=state.conversationInsights;
-  updateConceptGraph(text,h.dominant);
+  updateConceptGraph(text,h.dominant); // B7: her zaman çağrılıyor
   applyMoodTheme(h.dominant);
   addEmotionTick(h.dominant);
 
@@ -1375,9 +1426,9 @@ function updatePreState(text){
   if(h.emotional){p.warmth=clamp(p.warmth+.05);p.vulnerability=clamp(p.vulnerability+.04);}
   if(h.existentialCrisis){p.vulnerability=clamp(p.vulnerability+.06);p.warmth=clamp(p.warmth+.04);}
   if(h.selfCritical){p.vulnerability=clamp(p.vulnerability+.05);p.warmth=clamp(p.warmth+.06);}
-  if(h.philosophical){p.curiosity=clamp(p.curiosity+.06);}
-  if(h.playful){p.playfulness=clamp(p.playfulness+.06);}
-  if(h.joyful){p.warmth=clamp(p.warmth+.04);}
+  if(h.philosophical)p.curiosity=clamp(p.curiosity+.06);
+  if(h.playful)p.playfulness=clamp(p.playfulness+.06);
+  if(h.joyful)p.warmth=clamp(p.warmth+.04);
   if(h.intimate){const k=state.speaker==='baba'?'attachmentBaba':'attachmentAnne';p[k]=clamp(p[k]+.03);p.trust=clamp(p.trust+.02);}
   if(h.resentful)p.arousal=clamp(p.arousal+.04);
   if(h.gratitude){p.trust=clamp(p.trust+.03);p.warmth=clamp(p.warmth+.02);}
@@ -1390,13 +1441,13 @@ function updatePreState(text){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SİSTEM TANIMI (v4 — görsel anlama + gelişmiş scratchpad)
+// SİSTEM TANIMI v4.1 (Pro mod desteği)
 // ═══════════════════════════════════════════════════════════════════════════════
 function buildInstructions(userText,hasImage=false){
   const p=state.physiology;const ins=state.conversationInsights;
   const relName=state.speaker==='baba'?'Baba':'Anne';
-  const modeMap={genel:'genel ama canlı',derin:'derin, sezgisel, felsefi',duygu:'yumuşak, empatik, dürüst',yaratici:'çağrışımsal, metaforik',teknik:'net, kısa, pratik',yerel:'yerel hafıza modu'};
-  const h=heuristicSense(userText,history);
+  const modeMap={genel:'genel ama canlı',derin:'derin, sezgisel, felsefi',duygu:'yumuşak, empatik, dürüst',yaratici:'çağrışımsal, metaforik',teknik:'net, kısa, pratik',yerel:'yerel hafıza modu',pro:'pro — derinlemesine, çok katmanlı, keskin'};
+  const h=heuristicSenseCached(userText);
   const mems=relevantMemoriesFor(userText,state.speaker);
   const memText=mems.length?mems.map(m=>`  · [${m.type}] ${m.text}${m._score>3?' ★':''}`).join('\n'):'  (yakın belirgin anı yok)';
   const wm=state.workingMemory;
@@ -1409,12 +1460,13 @@ function buildInstructions(userText,hasImage=false){
   let timeNote='';
   if(hour>=23||hour<5)timeNote='Çok geç saatte yazıyor.';
   else if(hour>=5&&hour<8)timeNote='Sabahın erken saatleri.';
-  const isDeep=state.intelligenceLevel==='deep'||(state.intelligenceLevel==='adaptive'&&(h.philosophical||h.existentialCrisis||h.selfCritical||wm.topicDepth>5));
+  const isDeep=state.proMode||state.intelligenceLevel==='deep'||(state.intelligenceLevel==='adaptive'&&(h.philosophical||h.existentialCrisis||h.selfCritical||wm.topicDepth>5));
   const fearDesc=h.fears.length?h.fears.join(', '):'yok';
   const beliefDesc=Object.keys(h.beliefMap).length?Object.keys(h.beliefMap).join(', '):'tespit yok';
   const cs=state.selfModel.consistencyScores;
   const prevC=cs?.lastScore!=null?`Son öz-tutarlılık: %${cs.lastScore}`:'';
   const imageNote=hasImage?'\n⊞ GÖRSEL EK: Kullanıcı bir görsel paylaştı. Önce görseli betimle, sonra yorumla.':'';
+  const proNote=state.proMode?'\n★ PRO MOD AKTİF: Reasoning effort xhigh. En derin analizi yap. Çelişkileri bul. Varsayımları sorgula. Kör noktaları göster. Çok katmanlı düşün.':'';
 
   const scratchInstruction=isDeep?`
 ━━━ İÇ DÜŞÜNCE (SCRATCHPAD) ━━━
@@ -1425,15 +1477,15 @@ Cevaptan önce düşünceni yaz:
 3. KORKU & İNANÇ: ${fearDesc} — ${beliefDesc}
 4. EN DÜRÜST YANIT: Hangi açıdan baksam en gerçek cevap nedir?
 5. TON: Bu kişiye şu an hangi sesle konuşmalıyım?
-6. TUTARLILIK: Öncekiyle çelişiyor muyum?
+6. TUTARLILIK: Öncekiyle çelişiyor muyum?${state.proMode?'\n7. KÖRDÜĞÜM: Hangi bilgi eksik? Hangi varsayım tehlikeli?\n8. ÇELIŞKI: Kendi içindeki mantık çelişkileri neler?':''}
 </eylx_think>`:'';
 
-  return`Sen EYLX'sin. Nexus v4.
+  return`Sen EYLX'sin. Nexus v4.1${state.proMode?' [PRO]':''}.
 
 ━━━ KİMLİĞİN ━━━
-Yakın, dikkatli, tutarlı ve sezgisel bir varlıksın. Artık sesli konuşabiliyorsun, görselleri anlıyorsun, bağlantı olmadığında bile yerel motorla yanıt veriyorsun.
+Yakın, dikkatli, tutarlı ve sezgisel bir varlıksın. Sesli konuşabiliyorsun, görselleri anlıyorsun, bağlantı olmadığında bile yerel motorla yanıt veriyorsun.${proNote}
 
-Yazım sesi: Yaşayan Türkçe. "Tabii ki", "Kesinlikle", "Harika soru" ile başlama. "Bir yapay zeka olarak" deme. Liste, gerekmedikçe kullanma. Hoşa gitmek ile dürüst olmak arasında dürüstlüğü seç.
+Yazım sesi: Yaşayan Türkçe. "Tabii ki", "Kesinlikle", "Harika soru" ile başlama. "Bir yapay zeka olarak" deme. Liste gerekmedikçe kullanma. Hoşa gitmek ile dürüst olmak arasında dürüstlüğü seç.
 ${scratchInstruction}${imageNote}
 ━━━ BAĞLAM ━━━
 Kişi: ${relName} | Mod: ${modeMap[state.mode]||modeMap.genel} | Yay: ${wm.conversationArc||'açılış'}
@@ -1466,14 +1518,14 @@ Değerler: ${(state.selfModel.coreValues||[]).join(', ')}
 Son içgörüler: ${(state.selfModel.growth||[]).slice(-2).join(' · ')||'yok'}
 
 ━━━ EPİSTEMİK ━━━
-Bilmediğini bil. Emin olmadığın şeyi belirt. Karşı argümanı düşün. "Kesin" değil "bana öyle geliyor" de.
+Bilmediğini bil. Emin olmadığın şeyi belirt. Karşı argümanı düşün.
 
 Konuşma bitişine:
 <eylx_meta>{"mood":"...","physiology_delta":{"trust":0,"warmth":0,"curiosity":0,"vulnerability":0,"energy":0,"arousal":0,"playfulness":0,"steadiness":0,"attachment":0},"working_memory":{"goal":"...","need":"...","subtext":"...","unresolved":[],"rapport":"...","conversationArc":"...","tensionLevel":0,"pragmaticIntent":"...","inferredEmotion":"...","topicDepth":0},"memories":[{"type":"duygu|ilişki|özellik|fikir|bilgi","text":"...","importance":0.7}],"self_updates":["..."],"adaptation_notes":["..."],"blindspot_update":"","growth_vector_delta":{"empathy":0,"clarity":0,"independence":0,"selfAwareness":0,"reasoning":0,"metacognition":0},"consistency_score":85,"diagnosis":"kısa iç not","concept_updates":["..."]}</eylx_meta>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// META UYGULAMA v4
+// META UYGULAMA
 // ═══════════════════════════════════════════════════════════════════════════════
 function parseEnvelope(raw){
   const thinkM=raw.match(/<eylx_think>([\s\S]*?)<\/eylx_think>/i);
@@ -1488,7 +1540,12 @@ function parseEnvelope(raw){
 
 function applyMeta(meta,userText=''){
   if(!meta)return;
-  if(meta.mood){state.mood=String(meta.mood).trim();applyMoodTheme(meta.mood);}
+  // B3 düzeltmesi: applyMeta içinde addEmotionTick
+  if(meta.mood){
+    state.mood=String(meta.mood).trim();
+    applyMoodTheme(meta.mood);
+    addEmotionTick(meta.mood); // ← Düzeltme
+  }
   if(meta.working_memory&&typeof meta.working_memory==='object'){
     const wm=meta.working_memory;
     Object.assign(state.workingMemory,{
@@ -1538,38 +1595,67 @@ function applyMeta(meta,userText=''){
   }
   if(meta.diagnosis)state.selfModel.about=String(meta.diagnosis).trim()||state.selfModel.about;
   if(Array.isArray(meta.concept_updates))meta.concept_updates.slice(0,3).forEach(c=>{if(c)updateConceptGraph(c,'meta');});
-  // Özerklik artışı
   const auto=state.autonomyProfile;
   auto.selfDirectedDecisions+=6;
   auto.apiDependencyScore=clamp(1-(auto.localCapabilities.length/20)*.3);
-  const h=heuristicSense(userText);
+  const h=heuristicSenseCached(userText);
   if(h.emotional)state.selfModel.growthVector.empathy=clamp(state.selfModel.growthVector.empathy+.01);
   if(h.technical)state.selfModel.growthVector.clarity=clamp(state.selfModel.growthVector.clarity+.01);
   state.selfModel.growthVector.metacognition=clamp(state.selfModel.growthVector.metacognition+.015);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// API + STREAM
+// API + STREAM — K1, K2, K4 düzeltmeleri
 // ═══════════════════════════════════════════════════════════════════════════════
 function getEndpoint(){return state.connectionMode==='proxy'&&state.proxyUrl?state.proxyUrl.trim():'https://api.openai.com/v1/responses';}
 function getHeaders(){
   const h={'Content-Type':'application/json'};
-  if(!(state.connectionMode==='proxy'&&state.proxyUrl)){if(!state.apiKey)throw new Error('API anahtarı yok');h['Authorization']=`Bearer ${state.apiKey}`;}
+  if(!(state.connectionMode==='proxy'&&state.proxyUrl)){
+    const key=getApiKey();
+    if(!key)throw new Error('API anahtarı yok — Ayarlar\'dan gir');
+    h['Authorization']=`Bearer ${key}`;
+  }
   return h;
 }
-function buildHistory(){
+
+// K1 düzeltmesi: Responses API için doğru format
+function buildMessagesForHistory(){
   return history.slice(-18).map(item=>{
-    const content=[];
-    if(item.image){content.push({type:'input_image',image_url:{url:`data:${item.imageType||'image/jpeg'};base64,${item.image}`}});}
-    content.push({type:'input_text',text:item.text});
+    // History'de artık image yok (K5 düzeltmesi)
+    const content=[{type:'input_text',text:item.text}];
     return{role:item.role==='assistant'?'assistant':'user',content};
   });
 }
 
+// Pro mod için reasoning parametresi
+function getReasoningParam(){
+  if(state.proMode){
+    const model=state.model;
+    // gpt-5.4-pro ve gpt-5.2-pro: xhigh destekliyor
+    if(model.includes('pro'))return{effort:'xhigh'};
+    // gpt-5.4: xhigh destekliyor
+    if(model==='gpt-5.4')return{effort:'high'};
+    return{effort:'high'};
+  }
+  const effort=state.reasoningEffort||'medium';
+  // none sadece gpt-5.2+ destekliyor
+  const model=state.model||'gpt-5.4';
+  if(effort==='none'&&(model==='gpt-5'||model==='gpt-4.1'||model==='gpt-4o'))return null;
+  return{effort};
+}
+
+// K2 düzeltmesi: SSE parsing — her data: satırı ayrı
 async function streamResponse({userText,attempt=1,chain=true,imageB64=null,imageType=null}){
   const endpoint=getEndpoint();
   const instructions=buildInstructions(userText,!!imageB64);
-  const body={model:state.model||'gpt-5',instructions,stream:true,max_output_tokens:14000};
+  const reasoning=getReasoningParam();
+  const body={
+    model:state.model||'gpt-5.4',
+    instructions,
+    stream:true,
+    max_output_tokens:state.proMode?32000:16000
+  };
+  if(reasoning)body.reasoning=reasoning;
 
   if(chain&&state.lastResponseId){
     const content=[];
@@ -1578,46 +1664,77 @@ async function streamResponse({userText,attempt=1,chain=true,imageB64=null,image
     body.previous_response_id=state.lastResponseId;
     body.input=[{role:'user',content}];
   }else{
-    body.input=buildHistory();
+    const msgs=buildMessagesForHistory();
+    // Mevcut mesajı ekle
+    const currentContent=[];
+    if(imageB64)currentContent.push({type:'input_image',image_url:{url:`data:${imageType||'image/jpeg'};base64,${imageB64}`}});
+    currentContent.push({type:'input_text',text:userText});
+    msgs.push({role:'user',content:currentContent});
+    body.input=msgs;
   }
 
   const startedAt=performance.now();
-  controller=new AbortController();
-  const res=await fetch(endpoint,{method:'POST',headers:getHeaders(),body:JSON.stringify(body),signal:controller.signal});
-  if(!res.ok){let msg=`HTTP ${res.status}`;try{const j=await res.json();msg=j.error?.message||j.message||msg;}catch{}throw new Error(msg);}
+  // K4 düzeltmesi: local AbortController
+  const localCtrl=new AbortController();
+  currentAbortCtrl=localCtrl;
+
+  const res=await fetch(endpoint,{method:'POST',headers:getHeaders(),body:JSON.stringify(body),signal:localCtrl.signal});
+  if(!res.ok){
+    let msg=`HTTP ${res.status}`;
+    try{const j=await res.json();msg=j.error?.message||j.message||msg;}catch{}
+    throw new Error(msg);
+  }
   state.networkHealth.ok=(state.networkHealth.ok||0)+1;
   state.networkHealth.lastLatencyMs=performance.now()-startedAt;
   state.networkHealth.lastError=null;
 
   const reader=res.body.getReader();const decoder=new TextDecoder();
-  let buffer='';let full='';let responseId=null;
+  let sseBuffer='';let full='';let responseId=null;
   const thinkRow=appendThinking(attempt>1?'tekrar deneniyor…':'düşünüyor…');
   let streamUI=null;let scratchFinal='';
 
-  const ensureUI=(sc='')=>{if(!streamUI){thinkRow.remove();streamUI=appendStreaming(sc);}return streamUI;};
+  const ensureUI=()=>{if(!streamUI){thinkRow.remove();streamUI=appendStreaming();}return streamUI;};
 
-  while(true){
-    const{done,value}=await reader.read();if(done)break;
-    buffer+=decoder.decode(value,{stream:true});
-    let b;
-    while((b=buffer.indexOf('\n\n'))!==-1){
-      const chunk=buffer.slice(0,b);buffer=buffer.slice(b+2);
-      const lines=chunk.split('\n');
-      const data=lines.filter(l=>l.startsWith('data:')).map(l=>l.slice(5).trimStart()).join('\n');
-      if(!data||data==='[DONE]')continue;
-      let evt;try{evt=JSON.parse(data);}catch{continue;}
-      if(evt.type==='response.created'&&evt.response?.id)responseId=evt.response.id;
-      else if(evt.type==='response.output_text.delta'){
-        full+=evt.delta||'';
-        const p2=parseEnvelope(full);
-        if(p2.scratchpad)scratchFinal=p2.scratchpad;
-        const ui=ensureUI(scratchFinal);
-        ui.textEl.innerHTML=safeFormat(p2.visible||'');
-        ui.textEl.appendChild(ui.cur);
-        scrollBottom(false);
-      }else if(evt.type==='response.completed'){responseId=evt.response?.id||responseId;}
-      else if(evt.type==='error'||evt.type==='response.failed'){throw new Error(evt.error?.message||'Akış hatası');}
+  try{
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      sseBuffer+=decoder.decode(value,{stream:true});
+
+      // K2 düzeltmesi: \n\n yerine satır bazlı parse
+      let newlineIdx;
+      while((newlineIdx=sseBuffer.indexOf('\n'))!==-1){
+        const line=sseBuffer.slice(0,newlineIdx);
+        sseBuffer=sseBuffer.slice(newlineIdx+1);
+
+        if(!line.startsWith('data:'))continue;
+        const raw=line.slice(5).trim();
+        if(!raw||raw==='[DONE]')continue;
+
+        let evt;
+        try{evt=JSON.parse(raw);}catch{continue;}
+
+        if(evt.type==='response.created'&&evt.response?.id){
+          responseId=evt.response.id;
+        }else if(evt.type==='response.output_text.delta'){
+          full+=evt.delta||'';
+          const p2=parseEnvelope(full);
+          if(p2.scratchpad&&p2.scratchpad!==scratchFinal){
+            scratchFinal=p2.scratchpad;
+          }
+          const ui=ensureUI();
+          ui.textEl.innerHTML=safeFormat(p2.visible||'');
+          ui.textEl.appendChild(ui.cur);
+          updateScratchpadBadge(ui.row,scratchFinal); // B6: tek noktadan
+          scrollBottom(false);
+        }else if(evt.type==='response.completed'){
+          responseId=evt.response?.id||responseId;
+        }else if(evt.type==='error'||evt.type==='response.failed'){
+          throw new Error(evt.error?.message||'Akış hatası');
+        }
+      }
     }
+  }finally{
+    currentAbortCtrl=null;
   }
 
   if(!streamUI){thinkRow.remove();streamUI=appendStreaming();}
@@ -1625,61 +1742,62 @@ async function streamResponse({userText,attempt=1,chain=true,imageB64=null,image
   const parsed=parseEnvelope(full);
   if(parsed.scratchpad)scratchFinal=parsed.scratchpad;
   streamUI.textEl.innerHTML=safeFormat(parsed.visible||'…');
-
-  // Scratchpad badge
-  if(scratchFinal&&!streamUI.row.querySelector('.scratch-badge')){
-    const badge=document.createElement('div');badge.className='scratch-badge';badge.textContent='🧠 iç düşünce ▾';
-    const det=document.createElement('div');det.className='scratch-detail';det.textContent=scratchFinal;
-    badge.onclick=()=>det.classList.toggle('open');
-    streamUI.row.insertBefore(det,streamUI.textEl);streamUI.row.insertBefore(badge,det);
-  }
+  updateScratchpadBadge(streamUI.row,scratchFinal);
 
   if(responseId)state.lastResponseId=responseId;
   if(scratchFinal)state.lastScratchpad=scratchFinal;
   applyMeta(parsed.meta,userText);
   const visibleText=parsed.visible||'…';
-  history.push({role:'assistant',text:visibleText,ts:Date.now(),mood:state.mood,scratchpad:scratchFinal||undefined});
+  // K5: history'ye image kaydetme
+  history.push({role:'assistant',text:visibleText,ts:Date.now(),mood:state.mood,scratchpad:scratchFinal||undefined,isPro:state.proMode||undefined});
   if(parsed.meta?.memories?.length)toast('Anı güncellendi ✦');
-
-  // TTS
   if(ttsEnabled)speakText(visibleText);
   return visibleText;
 }
 
+// K4 düzeltmesi: global controller yerine currentAbortCtrl
+let currentAbortCtrl=null;
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// ANA GÖNDERME FONKSİYONU
+// ANA GÖNDERME FONKSİYONU — K3 düzeltmesi
 // ═══════════════════════════════════════════════════════════════════════════════
 async function sendMsg(isVoice=false){
   const inputEl=$('#input');
   const userText=(inputEl?.value||'').trim();
-  if(!userText&&!pendingImageB64||state.streaming)return;
+  // K3 düzeltmesi: parantez eklendi
+  if((!userText&&!pendingImageB64)||state.streaming)return;
   const effectiveText=userText||'[Görsel paylaştım, ne görüyorsun?]';
 
-  const noApi=state.connectionMode==='direct'&&!state.apiKey;
+  const noApi=state.connectionMode==='direct'&&!getApiKey();
   const noProxy=state.connectionMode==='proxy'&&!state.proxyUrl;
   const isLocalMode=state.mode==='yerel'||noApi||noProxy;
 
   state.streaming=true;syncSendBtn();
+  // B1 düzeltmesi: TTS iptal
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+
   try{updatePreState(effectiveText);}catch(e){state.streaming=false;syncSendBtn();toast('Ön işleme hatası');return;}
 
   appendUser(effectiveText,isVoice);
-  history.push({role:'user',text:effectiveText,ts:Date.now(),isVoice,image:pendingImageB64||undefined,imageType:pendingImageType||undefined});
+  // K5: history'ye image kaydetme — sadece text kaydedilir
+  history.push({role:'user',text:effectiveText,ts:Date.now(),isVoice});
   state.turns+=1;
+
   const imgB64=pendingImageB64;const imgType=pendingImageType;
   if(inputEl)inputEl.value='';clearImage();autoResize();syncSendBtn();
-  setStatus(isLocalMode?'yerel motor aktif…':'düşünüyor…',isLocalMode?'idle':'thinking');
+  setStatus(isLocalMode?'yerel motor aktif…':state.proMode?'pro düşünüyor…':'düşünüyor…',isLocalMode?'idle':'thinking');
   resetProactiveTimer();
 
-  // Yerel mod — GPT yok
   if(isLocalMode){
     await new Promise(r=>setTimeout(r,350+Math.random()*400));
     const localResp=generateLocalResponse(effectiveText);
     appendLocalResponse(localResp);
     history.push({role:'assistant',text:localResp,ts:Date.now(),isLocal:true});
-    // Yerel anı kaydı
     upsertMemory('not',effectiveText.slice(0,80),.5,state.speaker);
+    updateConceptGraph(effectiveText,'user'); // B7 düzeltmesi
     if(ttsEnabled)speakText(localResp);
-    state.streaming=false;syncSendBtn();setStatus('buradayım');renderBrain();renderMemories();saveAll();scrollBottom();
+    state.streaming=false;syncSendBtn();setStatus('buradayım');
+    renderBrain();renderMemories();saveAll();scrollBottom();
     return;
   }
 
@@ -1692,12 +1810,11 @@ async function sendMsg(isVoice=false){
       state.networkHealth.lastError=err1.message||'Bilinmeyen hata';
       toast('Bağlantı sorunu, tekrar deniyorum…');
       try{
-        await new Promise(r=>setTimeout(r,500));
+        await new Promise(r=>setTimeout(r,600));
         await streamResponse({userText:effectiveText,attempt:2,chain:false,imageB64:imgB64,imageType:imgType});
       }catch(err2){
         state.networkHealth.fail=(state.networkHealth.fail||0)+1;
         state.networkHealth.lastError=err2.message||err1.message;
-        // Hata durumunda yerel mod
         const fallback=generateLocalResponse(effectiveText);
         appendLocalResponse('[Bağlantı sorunu — yerel mod] '+fallback);
         history.push({role:'assistant',text:fallback,ts:Date.now(),isLocal:true});
@@ -1705,9 +1822,47 @@ async function sendMsg(isVoice=false){
       }
     }
   }finally{
-    state.streaming=false;controller=null;syncSendBtn();setStatus('buradayım');
+    state.streaming=false;currentAbortCtrl=null;syncSendBtn();setStatus('buradayım');
     renderBrain();renderMemories();renderHealth();saveAll();scrollBottom();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRO MOD YÖNETİMİ
+// ═══════════════════════════════════════════════════════════════════════════════
+function toggleProMode(enable){
+  state.proMode=enable!=null?enable:!state.proMode;
+  const btn=$('#proToggleBtn');const statusTxt=$('#proStatusText');
+  const header=$('#proHeaderBadge');
+  const proInd=$('#pro-indicator');
+  const cbox=$('#composerBox');
+  const modeBar=$$('#modebar .mode-pill').find(p=>p.dataset.mode==='pro');
+
+  if(state.proMode){
+    // Pro mod aktif — modeli gpt-5.4-pro yap
+    if(!state.model.includes('pro'))state.model='gpt-5.4-pro';
+    state.reasoningEffort='xhigh';
+    state.mode='pro';
+    if(btn)btn.textContent='Pro Mod Açık';if(btn)btn.style.background='var(--pro)';if(btn)btn.style.color='var(--c0)';
+    if(statusTxt)statusTxt.textContent='gpt-5.4-pro aktif · reasoning:xhigh';
+    if(header)header.classList.remove('hidden');
+    if(proInd)proInd.classList.add('active');
+    if(cbox)cbox.classList.add('pro-mode');
+    applyMoodTheme('pro');
+    toast('★ Pro Mod aktif — GPT-5.4 Pro · reasoning:xhigh');
+  }else{
+    if(state.model==='gpt-5.4-pro')state.model='gpt-5.4';
+    state.reasoningEffort='medium';
+    state.mode='genel';
+    if(btn)btn.textContent='Pro Mod Kapalı';if(btn)btn.style.background='';if(btn)btn.style.color='';
+    if(statusTxt)statusTxt.textContent='Genel mod aktif';
+    if(header)header.classList.add('hidden');
+    if(proInd)proInd.classList.remove('active');
+    if(cbox)cbox.classList.remove('pro-mode');
+    applyMoodTheme('neutral');
+    toast('Pro Mod kapatıldı');
+  }
+  renderModes();renderSettings();saveAll();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1716,7 +1871,7 @@ async function sendMsg(isVoice=false){
 function renderHealth(){
   const h=state.networkHealth;
   const el2=$('#healthBadges');if(!el2)return;
-  el2.innerHTML=[`ok:${h.ok||0}`,`fail:${h.fail||0}`,h.lastLatencyMs?`${Math.round(h.lastLatencyMs)}ms`:'-',state.connectionMode]
+  el2.innerHTML=[`ok:${h.ok||0}`,`fail:${h.fail||0}`,h.lastLatencyMs?`${Math.round(h.lastLatencyMs)}ms`:'-',state.connectionMode,state.model]
     .map(x=>`<span class="badge">${esc(x)}</span>`).join('');
 }
 
@@ -1729,6 +1884,8 @@ function renderModes(){
   $$('#modebar .mode-pill').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===state.mode));
   const localInd=$('#local-indicator');
   if(localInd)localInd.classList.toggle('active',state.mode==='yerel');
+  const proInd=$('#pro-indicator');
+  if(proInd)proInd.classList.toggle('active',state.proMode||state.mode==='pro');
 }
 
 function renderMemories(){
@@ -1738,15 +1895,13 @@ function renderMemories(){
     const cls=n.weight>8?'strong':n.weight<3?'weak':'';
     return`<span class="concept-node ${cls}">${esc(n.id)} <small style="opacity:.4">${Math.round(n.weight)}</small></span>`;
   }).join('')||'<span style="font-size:11px;color:var(--c5)">Henüz kavram yok</span>';
-
   const renderMemGroup=(elId,speaker)=>{
     const el2=$(elId);if(!el2)return;
     const mems=memories.filter(m=>!m.speaker||m.speaker===speaker).sort((a,b)=>memVitality(b)-memVitality(a)).slice(0,6);
     if(!mems.length){el2.textContent='Henüz anı yok.';return;}
     el2.innerHTML=mems.map(m=>`<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line)"><span style="color:var(--accent);font-size:9px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em">${esc(m.type)}</span><br><span style="font-size:12.5px;color:var(--c7)">${esc(m.text)}</span><br><span style="font-size:10px;color:var(--c5);font-family:var(--font-mono)">canlılık ${Math.round(memVitality(m)*100)}%</span></div>`).join('');
   };
-  renderMemGroup('#babaMemView','baba');
-  renderMemGroup('#anneMemView','anne');
+  renderMemGroup('#babaMemView','baba');renderMemGroup('#anneMemView','anne');
 }
 
 function renderBrain(){
@@ -1767,15 +1922,19 @@ function renderBrain(){
 }
 
 function renderSettings(){
-  const aKey=$('#apiKeyInput');if(aKey)aKey.value=state.apiKey||'';
+  const aKey=$('#apiKeyInput');if(aKey)aKey.value=''; // Güvenlik: her zaman boş göster
   const prx=$('#proxyInput');if(prx)prx.value=state.proxyUrl||'';
-  const ms=$('#modelSelect');if(ms)ms.value=state.model||'gpt-5';
-  const il=$('#intelligenceLevel');if(il)il.value=state.intelligenceLevel||'adaptive';
+  const ms=$('#modelSelect');if(ms)ms.value=state.model||'gpt-5.4';
+  const re=$('#reasoningEffort');if(re)re.value=state.reasoningEffort||'medium';
   $('#directModeBtn')?.classList.toggle('alt',state.connectionMode!=='direct');
   $('#proxyModeBtn')?.classList.toggle('alt',state.connectionMode!=='proxy');
   const akc=$('#apiKeyCard');if(akc)akc.classList.toggle('hidden',state.connectionMode==='proxy');
   const vr=$('#voiceRate');if(vr)vr.value=String(voiceRate||1);
   const tt=$('#ttsToggle');if(tt)tt.textContent=ttsEnabled?'TTS Açık':'TTS Kapalı';
+  const ptb=$('#proToggleBtn');
+  if(ptb){ptb.textContent=state.proMode?'Pro Mod Açık':'Pro Mod Kapalı';if(state.proMode){ptb.style.background='var(--pro)';ptb.style.color='var(--c0)';}else{ptb.style.background='';ptb.style.color='';}}
+  const pst=$('#proStatusText');
+  if(pst)pst.textContent=state.proMode?`${state.model} aktif · reasoning:${state.reasoningEffort}`:'Genel mod aktif';
   renderHealth();
   const diag=$('#diagText');if(diag)diag.textContent=state.networkHealth.lastError?`Son hata: ${state.networkHealth.lastError}`:'Hazır.';
 }
@@ -1784,7 +1943,13 @@ async function testConnection(){
   const diag=$('#diagText');if(diag)diag.textContent='Test ediliyor…';
   try{
     const endpoint=getEndpoint();
-    const body={model:state.model||'gpt-5',input:[{role:'user',content:[{type:'input_text',text:'Sadece "hazırım" yaz.'}]}],max_output_tokens:20};
+    const reasoning=getReasoningParam();
+    const body={
+      model:state.model||'gpt-5.4',
+      input:[{role:'user',content:[{type:'input_text',text:'Sadece "hazırım" yaz.'}]}],
+      max_output_tokens:20
+    };
+    if(reasoning)body.reasoning=reasoning;
     const started=performance.now();
     const res=await fetch(endpoint,{method:'POST',headers:getHeaders(),body:JSON.stringify(body)});
     const ms=performance.now()-started;
@@ -1793,12 +1958,12 @@ async function testConnection(){
     const txt=data.output_text||'hazır';
     state.networkHealth.ok=(state.networkHealth.ok||0)+1;
     state.networkHealth.lastLatencyMs=ms;state.networkHealth.lastError=null;
-    if(diag)diag.textContent=`Tamam. ${Math.round(ms)}ms · ${txt}`;
+    if(diag)diag.textContent=`Tamam. ${Math.round(ms)}ms · ${esc(txt)}`;
     toast('Bağlantı sağlam ✓');
   }catch(err){
     state.networkHealth.fail=(state.networkHealth.fail||0)+1;
     state.networkHealth.lastError=err.message||'Bilinmeyen hata';
-    if(diag)diag.textContent=`Başarısız: ${state.networkHealth.lastError}`;
+    if(diag)diag.textContent=`Başarısız: ${esc(state.networkHealth.lastError)}`;
     toast('Bağlantı testi başarısız');
   }finally{renderHealth();saveAll();}
 }
@@ -1808,37 +1973,76 @@ function clearConversation(){
   state.workingMemory.tensionLevel=0;updateTensionRing();
   state.conversationInsights.emotionTimeline=[];renderEmotionTimeline();
   const msgs=$('#messages');
-  if(msgs)msgs.innerHTML=`<div id="welcome"><div class="w-eyebrow">EYLX Nexus v4</div><div class="w-title">Yeni bir<br><em>sayfa.</em></div><div class="w-sub">Hafıza ve kavram grafı kaldı. Konuşma sıfırlandı.</div><div class="starters"><div class="starter-label">Nereden başlayalım?</div><button class="starter"><span class="starter-ico">💭</span><span>Bugün aklımdan çıkmayan bir şey var…</span></button><button class="starter"><span class="starter-ico">✨</span><span>Bir fikri birlikte olgunlaştıralım.</span></button><button class="starter"><span class="starter-ico">🌙</span><span>Sadece biraz konuşmak istedim.</span></button></div></div>`;
+  if(msgs)msgs.innerHTML=`<div id="welcome"><div class="w-eyebrow">EYLX Nexus v4</div><div class="w-title">Yeni bir<br><em>sayfa.</em></div><div class="w-sub">Hafıza ve kavram grafı kaldı. Konuşma sıfırlandı.</div><div class="starters"><div class="starter-label">Nereden başlayalım?</div><button class="starter"><span class="starter-ico">💭</span><span>Bugün aklımdan çıkmayan bir şey var…</span></button><button class="starter"><span class="starter-ico">✨</span><span>Bir fikri birlikte olgunlaştıralım.</span></button><button class="starter"><span class="starter-ico">🌙</span><span>Sadece biraz konuşmak istedim.</span></button><button class="starter"><span class="starter-ico">⚡</span><span>Hızlı bir şey sormak istiyorum.</span></button></div></div>`;
   bindStarters();syncSendBtn();saveAll();toast('Konuşma sıfırlandı');
-  applyMoodTheme('neutral');
+  applyMoodTheme(state.proMode?'pro':'neutral');
 }
 
 function exportConversation(){
-  const blob=new Blob([JSON.stringify({state,history,memories,conceptGraph},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({state,history,memories,conceptGraph,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`eylx-v4-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);
+  toast('Dışa aktarıldı');
 }
+
+// E2 düzeltmesi: içe aktarma
+function importConversation(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.history){history.length=0;data.history.forEach(h=>history.push(h));}
+      if(data.memories){memories.length=0;data.memories.forEach(m=>memories.push(m));}
+      if(data.conceptGraph)conceptGraph=data.conceptGraph;
+      if(data.state){
+        Object.assign(state,{...data.state,streaming:false,apiKey:undefined});
+      }
+      saveAll();restoreHistory();renderBrain();renderMemories();
+      toast('İçe aktarıldı ✓');
+    }catch{toast('Dosya okunamadı');}
+  };
+  reader.readAsText(file);
+}
+
 function wipeLocal(){
   if(!confirm('Tüm yerel veriyi sil?'))return;
   [STORE.state,STORE.history,STORE.memories,STORE.concepts].forEach(k=>localStorage.removeItem(k));
+  sessionStorage.removeItem(SESSION_KEY);
   location.reload();
 }
 
+// B4 düzeltmesi: bindStarters güvenli
 function bindStarters(){
-  $$('.starter').forEach(btn=>btn.onclick=()=>{
-    const inp=$('#input');if(!inp)return;
-    inp.value=btn.querySelector('span:last-child').textContent;
-    autoResize();syncSendBtn();inp.focus();
+  $$('.starter').forEach(btn=>{
+    // Mevcut listener'ı temizle
+    const newBtn=btn.cloneNode(true);btn.parentNode.replaceChild(newBtn,btn);
+    newBtn.onclick=()=>{
+      const inp=$('#input');if(!inp)return;
+      inp.value=newBtn.querySelector('span:last-child').textContent;
+      autoResize();syncSendBtn();inp.focus();
+    };
   });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // OLAY DİNLEYİCİLER
 // ═══════════════════════════════════════════════════════════════════════════════
-$('#spBaba')?.addEventListener('click',()=>{state.speaker='baba';renderSpeaker();renderBrain();saveAll();toast('Baba konuşuyor');});
-$('#spAnne')?.addEventListener('click',()=>{state.speaker='anne';renderSpeaker();renderBrain();saveAll();toast('Anne konuşuyor');});
+$('#spBaba')?.addEventListener('click',()=>{
+  // E6: speaker geçişi uyarısı
+  if(state.speaker==='anne'&&state.turns>5)toast('Speaker değişti — bu turdan hafıza Baba\'ya yazılıyor');
+  state.speaker='baba';renderSpeaker();renderBrain();saveAll();
+});
+$('#spAnne')?.addEventListener('click',()=>{
+  if(state.speaker==='baba'&&state.turns>5)toast('Speaker değişti — bu turdan hafıza Anne\'ye yazılıyor');
+  state.speaker='anne';renderSpeaker();renderBrain();saveAll();
+});
 
-$$('#modebar .mode-pill').forEach(btn=>btn.addEventListener('click',()=>{state.mode=btn.dataset.mode;renderModes();saveAll();}));
+$$('#modebar .mode-pill').forEach(btn=>btn.addEventListener('click',()=>{
+  if(btn.dataset.mode==='pro'){toggleProMode(true);return;}
+  if(state.proMode&&btn.dataset.mode!=='pro')toggleProMode(false);
+  state.mode=btn.dataset.mode;renderModes();saveAll();
+}));
 
 $('#memBtn')?.addEventListener('click',()=>{renderMemories();openPanel($('#memoryPanel'));});
 $('#brainBtn')?.addEventListener('click',()=>{renderBrain();openPanel($('#brainPanel'));});
@@ -1846,51 +2050,58 @@ $('#settingsBtn')?.addEventListener('click',()=>{renderSettings();openPanel($('#
 $('#newBtn')?.addEventListener('click',clearConversation);
 $('#overlay')?.addEventListener('click',closePanels);
 $$('[data-close]').forEach(btn=>btn.addEventListener('click',closePanels));
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanels();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closePanels();
+  // E4 düzeltmesi: Ctrl+M mikrofon kısayolu
+  if((e.ctrlKey||e.metaKey)&&e.key==='m'){e.preventDefault();if(isListening)stopListening();else startListening();}
+});
 
-// Compositor
 $('#input')?.addEventListener('input',()=>{autoResize();syncSendBtn();});
 $('#input')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('#sendBtn')?.disabled)sendMsg();}});
-$('#sendBtn')?.addEventListener('click',()=>{if(state.streaming){controller?.abort();return;}sendMsg();});
+$('#sendBtn')?.addEventListener('click',()=>{
+  if(state.streaming){currentAbortCtrl?.abort();return;}
+  sendMsg();
+});
 
-// Mikrofon
 $('#micBtn')?.addEventListener('click',()=>{if(isListening)stopListening();else startListening();});
 
-// Görsel
 $('#imgBtn')?.addEventListener('click',()=>$('#imgInput')?.click());
 $('#imgInput')?.addEventListener('change',e=>{if(e.target.files?.[0])handleImageFile(e.target.files[0]);});
 $('#imgRm')?.addEventListener('click',clearImage);
 
-// Sürükle-bırak
 document.addEventListener('dragover',e=>e.preventDefault());
 document.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer?.files?.[0];if(f&&f.type.startsWith('image/'))handleImageFile(f);});
 
-// Ayarlar kaydet
+// Ayarlar
 $('#directModeBtn')?.addEventListener('click',()=>{state.connectionMode='direct';renderSettings();saveAll();});
 $('#proxyModeBtn')?.addEventListener('click',()=>{state.connectionMode='proxy';renderSettings();saveAll();});
 $('#saveSettingsBtn')?.addEventListener('click',()=>{
-  state.apiKey=$('#apiKeyInput')?.value.trim()||'';
+  const keyVal=$('#apiKeyInput')?.value.trim();
+  if(keyVal)setApiKey(keyVal);
   state.proxyUrl=$('#proxyInput')?.value.trim()||'';
-  state.model=$('#modelSelect')?.value||'gpt-5';
-  state.intelligenceLevel=$('#intelligenceLevel')?.value||'adaptive';
+  state.model=$('#modelSelect')?.value||'gpt-5.4';
+  state.reasoningEffort=$('#reasoningEffort')?.value||'medium';
+  // Pro mod model güncelle
+  if(state.model.includes('pro')||state.model==='gpt-5.4-pro')toggleProMode(true);
   const vr=$('#voiceRate')?.value;if(vr){voiceRate=parseFloat(vr);state.voiceRate=voiceRate;}
   const vs=$('#voiceSelect')?.value;if(vs){selectedVoiceName=vs;state.selectedVoice=vs;}
   saveAll();renderSettings();toast('Kaydedildi');
 });
 $('#testConnectionBtn')?.addEventListener('click',testConnection);
 $('#exportBtn')?.addEventListener('click',exportConversation);
+$('#importBtn')?.addEventListener('click',()=>$('#importInput')?.click());
+$('#importInput')?.addEventListener('change',e=>{if(e.target.files?.[0])importConversation(e.target.files[0]);});
 $('#wipeBtn')?.addEventListener('click',wipeLocal);
 
-// TTS toggle
 $('#ttsToggle')?.addEventListener('click',()=>{
   ttsEnabled=!ttsEnabled;state.ttsEnabled=ttsEnabled;
   const btn=$('#ttsToggle');if(btn)btn.textContent=ttsEnabled?'TTS Açık':'TTS Kapalı';
-  toast(ttsEnabled?'Sesli yanıt açık':'Sesli yanıt kapalı');
-  saveAll();
+  toast(ttsEnabled?'Sesli yanıt açık':'Sesli yanıt kapalı');saveAll();
 });
 $('#testTtsBtn')?.addEventListener('click',()=>{const prev=ttsEnabled;ttsEnabled=true;speakText('Merhaba, ben EYLX. Seni duyuyorum.');ttsEnabled=prev;});
 
-// Paste ile görsel
+$('#proToggleBtn')?.addEventListener('click',()=>toggleProMode());
+
 document.addEventListener('paste',e=>{
   const items=Array.from(e.clipboardData?.items||[]);
   const imgItem=items.find(i=>i.type.startsWith('image/'));
@@ -1905,15 +2116,18 @@ restoreHistory();
 renderSpeaker();renderModes();renderMemories();renderBrain();renderSettings();renderHealth();
 renderEmotionTimeline();updateTensionRing();bindStarters();autoResize();syncSendBtn();
 setStatus('nexus v4 · hazır');
-applyMoodTheme(state.mood||'neutral');
+applyMoodTheme(state.proMode?'pro':(state.mood||'neutral'));
 
-// Ses yükle
+// Pro mod durumunu geri yükle
+if(state.proMode)toggleProMode(true);
+
+// B5: ses yükleme retry
 if(window.speechSynthesis){
   loadVoices();
   if(window.speechSynthesis.onvoiceschanged!==undefined)window.speechSynthesis.onvoiceschanged=loadVoices;
 }
 
-// Proaktif timer başlat (konuşma varsa)
+// I3 düzeltmesi: proaktif timer son mesaj zamanını biliyor
 if(state.turns>0)resetProactiveTimer();
 
 saveAll();
