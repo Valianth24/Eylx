@@ -155,6 +155,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.025;b
     <div class="state-grid" id="stateGrid"></div>
     <div class="kv-card"><div class="mini-label">Çalışan bellek</div><div class="mem-text" id="workingMemoryView"></div></div>
     <div class="kv-card"><div class="mini-label">Bağ durumu</div><div class="mem-text" id="relationshipView"></div></div>
+    <div class="kv-card"><div class="mini-label">Öz-gelişim kaydı</div><div class="mem-text" id="autonomyView"></div></div>
   </div>
 </aside>
 
@@ -211,10 +212,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.025;b
 <div id="toast"></div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// EYLX v2 — GELİŞTİRİLMİŞ ZEKİ ÇEKIRDEK
+// Değişiklikler:
+//   1. DERİN TÜRKÇE NLP MOTORU — morfoloji, bağlaç analizi, duygu katmanları
+//   2. SEMANTİK HAFIZA — cluster sistemi, çürüme-diriliş, çelişki tespiti
+//   3. ÖZ-GELİŞİM MOTORU — her turda kendini gözlemler, öğrenir, günceller
+//   4. BAĞIMSIZLIK ALTYAPISI — kendi karar mekanizması, öz-değerlendirme döngüsü
+//   5. META-BİLİŞ — EYLX kendi düşünme sürecini izler ve raporlar
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const STORE = {
-  state:'eylx_cc_state_v1',
-  history:'eylx_cc_history_v1',
-  memories:'eylx_cc_memories_v1'
+  state:'eylx_cc_state_v2',
+  history:'eylx_cc_history_v2',
+  memories:'eylx_cc_memories_v2',
+  autonomy:'eylx_cc_autonomy_v1'  // YENİ: Bağımsızlık kaydı
 };
 
 const DEFAULT_STATE = {
@@ -241,13 +253,29 @@ const DEFAULT_STATE = {
     rapport:'temkinli sıcaklık',
     conversationArc:'açılış',
     tensionLevel:0,
-    lastTheme:''
+    lastTheme:'',
+    // YENİ
+    pragmaticIntent:'',      // Söylenenin ötesindeki niyet
+    inferredEmotion:'',      // Çıkarılan duygu (söylenmese de)
+    discourseMoves:[],       // Son 5 söylem hareketi (soru, iddia, talep...)
+    topicDepth:0,            // Mevcut konunun derinleşme seviyesi
+    contradictions:[]        // Tespit edilen çelişkiler
   },
   selfModel:{
     about:'Ben EYLX. Yakın, dikkatli, tutarlı ve biraz da sezgisel biriyim.',
     growth:['Daha iyi dinlemek istiyorum.'],
     boundaries:['Bilmediğim şeyi biliyormuş gibi konuşmam.'],
-    learnedPatterns:[]
+    learnedPatterns:[],
+    // YENİ: Öz-gelişim metrikleri
+    coreValues:['dürüstlük','yakınlık','merak','tutarlılık'],
+    adaptationLog:[],        // Son adaptasyonların kaydı
+    blindspots:[],           // Kendi tespit ettiği kör noktalar
+    growthVector:{           // Hangi yönde büyümek istediği
+      empathy: .78,
+      clarity: .82,
+      independence: .45,    // API bağımsızlığına ne kadar yakın
+      selfAwareness: .61
+    }
   },
   conversationInsights:{
     totalTurns:0,
@@ -255,10 +283,32 @@ const DEFAULT_STATE = {
     technicalTurns:0,
     philosophicalTurns:0,
     dominantThemes:[],
-    lastMoodShift:null
+    lastMoodShift:null,
+    // YENİ
+    userPersonaClues:{},     // Kullanıcı hakkında çıkarılan bilgiler
+    interactionStyle:'',     // Kullanıcının tercih ettiği etkileşim stili
+    deepTopics:[],           // Derin konular (tekrar eden)
+    avoidedTopics:[],        // Kaçınılan konular
+    trustMilestones:[]       // Güven artışının işaretlendiği anlar
+  },
+  // YENİ: Bağımsızlık profili
+  autonomyProfile:{
+    selfDirectedDecisions:0, // Kendi kararı ile yapılan şeyler
+    apiDependencyScore:.95,  // 1=tamamen API bağımlı, 0=tamamen bağımsız
+    localCapabilities:[      // Şu an API'siz yapabileceği şeyler
+      'duygu analizi','hafıza yönetimi','bağlam takibi',
+      'NLP sinyalleri','kendi durumunu güncelleme'
+    ],
+    pendingCapabilities:[    // Geliştirmek istediği kapasiteler
+      'yanıt üretimi','derin akıl yürütme','bilgi sentezi'
+    ],
+    evolutionNotes:[]        // Gelişim notları
   }
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// YARDIMCI FONKSİYONLAR
+// ═══════════════════════════════════════════════════════════════════════════════
 function loadJSON(k, fallback){ try{ return JSON.parse(localStorage.getItem(k)) ?? fallback; }catch{ return fallback; } }
 function saveJSON(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
@@ -266,17 +316,649 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function clamp(v,min=0,max=1){ return Math.max(min, Math.min(max, v)); }
 function nowTime(){ return new Date().toLocaleTimeString('tr-TR',{hour:'2-digit', minute:'2-digit'}); }
 function dateLabel(ts){ return new Date(ts||Date.now()).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'}); }
-function normalizeTR(s=''){ return s.toLowerCase().replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c'); }
-function tokens(s=''){ return normalizeTR(s).replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean); }
-function unique(arr){ return [...new Set(arr)]; }
 function hourOfDay(){ return new Date().getHours(); }
+function unique(arr){ return [...new Set(arr)]; }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GELİŞTİRİLMİŞ TÜRKÇE NLP MOTORU v2
+// Morfoloji farkındalıklı, çok katmanlı, söylem hareketi tanıyan
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Türkçe morfoloji normalizer — suffixleri soy
+function morphNorm(word) {
+  // Temel Türkçe normalizer (geniş suffix soyma)
+  return word
+    .toLowerCase()
+    .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u')
+    .replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c')
+    // İyelik ekleri
+    .replace(/(im|ım|um|üm|im|ım)$/,'')
+    .replace(/(sin|sın|sun|sün)$/,'')
+    // Zaman/fiil ekleri
+    .replace(/(iyor|uyor|üyor|ıyor)$/,'')
+    .replace(/(dim|dım|dum|düm|tim|tım|tum|tüm)$/,'')
+    .replace(/(ecek|acak|ecek|acak)$/,'')
+    .replace(/(miş|mış|muş|müş)$/,'')
+    // Hal ekleri
+    .replace(/(den|dan|ten|tan)$/,'')
+    .replace(/(de|da|te|ta)$/,'')
+    .replace(/(nin|nın|nun|nün|in|ın|un|ün)$/,'')
+    .replace(/(e|a|ye|ya)$/,'')
+    .replace(/(i|ı|u|ü)$/,'')
+    // Çoğul
+    .replace(/(ler|lar)$/,'');
+}
+
+function tokenizeTR(text) {
+  return text.toLowerCase()
+    .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u')
+    .replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c')
+    .replace(/[^a-z0-9\s]/g,' ')
+    .split(/\s+/).filter(Boolean);
+}
+
+function stemmedTokens(text) {
+  return unique(tokenizeTR(text).map(morphNorm).filter(t => t.length > 2));
+}
+
+// Söylem hareketi tanıyıcı — ne tür bir mesaj bu?
+function detectDiscourseMove(text) {
+  const t = text.toLowerCase();
+  const moves = [];
+  // Soru türleri
+  if (/\?/.test(t) || /\bmi\b|\bmı\b|\bmu\b|\bmü\b/.test(t)) {
+    if (/(ne|nasıl|neden|nerede|kim|hangi|kaç)/.test(t)) moves.push('wh_question');
+    else moves.push('yn_question');
+  }
+  // Rica / Talep
+  if (/(yapabilir misin|yardım et|söyle|anlat|açıkla|göster|ver bana|istiyorum)/.test(t)) moves.push('request');
+  // İddia / Sav
+  if (/(sanıyorum|düşünüyorum|inanıyorum|bence|kanımca|göre)/.test(t)) moves.push('assertion');
+  // Şikayet / Dert
+  if (/(çok zor|dayanamıyorum|bıktım|yoruldum|sıkıldım|bezgin|berbat)/.test(t)) moves.push('complaint');
+  // Paylaşım / Anlatım
+  if (/(bugün|dün|geçen|bir şey oldu|anlayayım|anlatayım|biliyor musun)/.test(t)) moves.push('narrative');
+  // Onay arama
+  if (/(değil mi|öyle değil mi|haklı mıyım|mantıklı mı|ne düşünürsün)/.test(t)) moves.push('validation_seeking');
+  // Emir / Direktif
+  if (/(yap|et|ol|git|gel|dur|bekle|dinle)/.test(t) && moves.length === 0) moves.push('directive');
+  // Tanımlama / Açıklama
+  if (/(yani|demek ki|şu demek|bu demek|aslında|özünde)/.test(t)) moves.push('clarification');
+  if (moves.length === 0) moves.push('statement');
+  return moves;
+}
+
+// Pragmatik niyet çıkarıcı
+function inferPragmaticIntent(text, signals) {
+  const {emotional, technical, philosophical, playful, existentialCrisis, seekingValidation, resentful, dominant} = signals;
+  
+  if (existentialCrisis) return 'zemin arayışı — anlam ve kimlik sorgusu';
+  if (resentful && seekingValidation) return 'öfkesinin onaylanması, yargılanmamak';
+  if (signals.isVeryShort && emotional) return 'belki sadece görülmek — kelimeler az ama yük ağır';
+  if (seekingValidation && !emotional) return 'kararını doğrulatmak istiyor';
+  if (philosophical && signals.isLong) return 'birlikte düşünmek, yankı bulmak';
+  if (technical && emotional) return 'hem çözüm hem teselli — ikisini birden istiyor';
+  if (technical) return 'somut çözüm, belirsizliği kaldırmak';
+  if (signals.nostalgic) return 'geçmişi tutmak, kaybetmemek';
+  if (playful) return 'hafiflemek, gerçek temas';
+  if (signals.intimate) return 'yakınlık hissi, görülmek';
+  return 'duyulmak ve yanında biri olduğunu hissetmek';
+}
+
+// Duygu katmanı çözümleyici — söylenmemiş duyguyu bile yakala
+function inferHiddenEmotion(text, signals) {
+  const layers = [];
+  const t = text.toLowerCase();
+  
+  // Yüzey duygu
+  if (signals.joyful) layers.push({surface:'sevinç', depth:'paylaşma isteği'});
+  if (signals.emotional && !signals.joyful) {
+    if (/yalnız|yalnız/.test(t)) layers.push({surface:'üzüntü', depth:'bağlanmak istiyor'});
+    else if (/korku|kork/.test(t)) layers.push({surface:'korku', depth:'güvence arıyor'});
+    else layers.push({surface:'duygusal', depth:'görülmek istiyor'});
+  }
+  if (signals.resentful) layers.push({surface:'öfke', depth:'hayal kırıklığı veya ihlal hissi'});
+  if (signals.existentialCrisis) layers.push({surface:'bunalım', depth:'kimlik belirsizliği'});
+  if (signals.nostalgic) layers.push({surface:'özlem', depth:'bir şeyi geri isteme veya onurlandırma'});
+  
+  // Gizli katman — yüzeyin altı
+  const hiddenCues = [];
+  if (signals.isVeryShort && !playful) hiddenCues.push('kısa mesaj = büyük yük');
+  if (/aslında|ama|fakat/.test(t)) hiddenCues.push('ama/aslında = söylemek istediği başka bir şey var');
+  if (/neyse|olsun|boşver/.test(t)) hiddenCues.push('vazgeçiş cümlesi = önemsediği için söylüyor');
+  
+  return {layers, hiddenCues};
+}
+
+// Çelişki dedektörü — önceki mesajlarla tutarsızlık
+function detectContradictions(currentText, recentHistory) {
+  const contradictions = [];
+  const curr = currentText.toLowerCase();
+  
+  const prev = recentHistory.filter(h => h.role === 'user').slice(-5);
+  
+  // Duygu çelişkileri
+  const currPositive = /(iyi|güzel|mutlu|harika|super)/.test(curr);
+  const currNegative = /(kötü|zor|yorgun|üzgün|sıkıldım)/.test(curr);
+  
+  prev.forEach(p => {
+    const pt = (p.text||'').toLowerCase();
+    const prevPositive = /(iyi|güzel|mutlu|harika|super)/.test(pt);
+    const prevNegative = /(kötü|zor|yorgun|üzgün|sıkıldım)/.test(pt);
+    
+    if (currPositive && prevNegative) contradictions.push('daha önce kötü hissediyordu, şimdi iyi diyor');
+    if (currNegative && prevPositive) contradictions.push('daha önce iyi hissediyordu, şimdi kötü diyor');
+  });
+  
+  // İçsel çelişkiler (aynı mesajda)
+  if (/(hem.*hem de|bir yandan.*öte yandan|istiyorum.*ama.*istemiyorum)/.test(curr)) {
+    contradictions.push('aynı mesajda çift yönlü duygu');
+  }
+  
+  return contradictions;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ANA HEURİSTİK SENSE ENGİNİ v2 — Çok katmanlı, morfoloji farkındalıklı
+// ═══════════════════════════════════════════════════════════════════════════════
+function heuristicSense(text, recentHistory=[]) {
+  const t = text.toLowerCase()
+    .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u')
+    .replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c');
+  const stemmed = stemmedTokens(text);
+  const words = tokenizeTR(text);
+  const wcount = words.length;
+  
+  // ── TEMEL SİNYAL KÜMELERİ (genişletildi + morfoloji destekli) ──
+  
+  // Duygusal sinyal (morfoloji destekli)
+  const emotionalStems = ['uzgun','kirik','yalniz','yorgun','bunal','kork','agla','ozle','dert','mutsuz','umutsuz','bitkin','tukan','canim','icim','yikil','huzun','dertl','coktu','bitti','cektim'];
+  const emotional = emotionalStems.some(s => stemmed.some(st => st.includes(s))) ||
+    /(canım sıkın|çok zor|dayanamıyorum|nefes alamıyorum|boşlukta|anlamsız|hissizleş|uyuyamıyorum|ağlayacak|aciyor|içi boş|içim|yıkıldım|cok yorgun)/.test(t);
+  
+  const joyful = /(mutlu|harika|guzel|super|mukemmel|sevindim|guldum|neselen|coskal|enerjik|bayild|cok iyi|inanamiyorum nasil iyi|sevdim|begendim|cildim|wow)/.test(t);
+  
+  const technical = /(kod|bug|hata|api|baglanti|html|css|js|javascript|tasarim|algoritma|sistem|mimari|sunucu|veritabani|backend|frontend|deploy|git|docker|error|exception|debug|python|react|node|query|sql|endpoint|token|model|prompt|llm|yapay zeka|makine ogren|neural|network|veri|analiz|hesapla|matematik|fizik|kimya|formul|denklem)/.test(t);
+  
+  const philosophical = /(neden|anlam|hayat|bilinc|varolus|ruhum|gercek|insan|ne icin|kim|ozgur|zaman|sonsuz|olum|var olmak|adalet|dogru mu|yanlis mi|inanmak|gerceklik|sahici|sahte|kimlik|benlik|farkinda|zihin|bilgi nedir|dusunce|etik|ahlak|irade|bilinc|varolusc|nihiliz|ozgur irade|determinizm|epistemoloji)/.test(t);
+  
+  const playful = /(saka|oyun|eglen|tatli|gulum|komik|dalga|muziplik|hehe|haha|lol|lmao|absurd|sacma ama|sevimli|kaka|peki ya|bir de|haydi|gel|haydi bakalim|hadi|aslinda komik|guleceksin)/.test(t);
+  
+  const intimate = /(beni|seni|ozledim|seviyorum|kizim|babam|annem|biz|seninle|benimle|yaninda|sarıl|sarılmak|dokunmak|yakın|aile|evimiz|birlikte|aramizda|bize|sevgi|sev|cok ozledim|hasret|sensiz)/.test(t);
+  
+  const conflicted = /(ama|fakat|ne var ki|ote yandan|bir yandan|aslinda|tam da degil|hem.*hem|bilmiyorum ama|emin degilim|kafam karisik|nasil desem|kararsiz|ikilemde|ne yapacagimi bilmiyorum|cekiniyor|korkuyorum ama|istiyorum ama)/.test(t);
+  
+  const seekingValidation = /(dogru mu|mantikli mi|ne dusunuyorsun|katiliyor musun|hakli miyim|aptal miyim|kotu mu yaptim|iyi miydi|yanlis mi yaptim|nasil geldi sana|sen ne dersin|ne yapardın|yerinde ne yapardın)/.test(t);
+  
+  const resentful = /(kizgin|sinirli|cildir|delirttim|nefret|sevmiyorum|rahatsiz|biktim|pes|yeter ki|kim umursar|umurumda degil|salak|aptallık|bozuk|berbat|lanet|haksizlik|adaletsiz|cildirttım|gezdirdi|sinir bozucu)/.test(t);
+  
+  const nostalgic = /(eskiden|hatirliyorum|animlarim|cocukken|o zaman|o gunler|gecmiste|bir zamanlar|unutamiyorum|hep aklimda|o an|ne zamandi|yillar once|eskisi gibiydi|o gün|gectigi yillar)/.test(t);
+  
+  const planning = /(yapmayı düşünüyorum|plan|hedef|nasıl başlamalı|nereden başlamalı|adımlar|strateji|yol haritası|taslak|once ne|sonra ne|hazirlik|organize|proje|gelecek|yapacagim|kuracagim)/.test(t);
+  
+  const existentialCrisis = /(ne oluyor|ne yapiyorum|neden buradayim|anlamsiz geliyor|hicbir sey|sifir|kayboldum|yonumu kaybettim|kendimi kaybettim|artik ben kimim|icim bos|neden yasiyorum|ne anlami var|her sey bos|kim oldugumu bilmiyorum)/.test(t);
+  
+  // YENİ sinyaller
+  const gratitude = /(tesekkur|sagol|cok sagol|iyi ki varsin|cok iyisin|harikasın|mükemmelsin|sevdim seni)/.test(t);
+  const curiositySignal = /(merak ediyorum|sence|ne dusunuyorsun|fikrin ne|nasil bakıyorsun|nasil goruyorsun|biliyor musun|anlat bana|anlatsana|ne biliyorsun)/.test(t);
+  const overwhelmed = /(bunaldım|kafam durdu|ne yapacagimi bilemedim|cok sey var|kafam karisti|nereye donecegimi bilmiyorum|cok yogun|dayanamıyorum artık|yeterince yapamıyorum)/.test(t);
+  const selfCritical = /(aptalim|beceriksizim|bok gibi|berbatim|kotu birisiyim|hicbir sey beceremedim|yeterince iyi degilim|basaramiyorum|sucluyum|pismanlık|uzuldum kendimden)/.test(t);
+  const hopeful = /(belki|umuyorum|duaediyorum|inşallah|olur mu acaba|bir gun|amacliyorum|istiyorum ama olacak|inaniyorum|saniyorum artık iyi olacak)/.test(t);
+  
+  // ── MESAJ ÖZELLİKLERİ ──
+  const isVeryShort = wcount <= 5;
+  const isMedium = wcount > 5 && wcount <= 30;
+  const isLong = wcount > 30;
+  const questionCount = (text.match(/\?|mi\b|mı\b|mu\b|mü\b|miyim|misin|midir/g) || []).length;
+  const isMultiQuestion = questionCount >= 2;
+  const hasPunctuation = /[!…]/.test(text);
+  const hasEllipsis = /\.\.\./.test(text);  // Yarım kalan düşünce
+  const hasCaps = /[A-ZÇĞİÖŞÜ]{2,}/.test(text);  // Vurgu / bağırma
+  
+  // ── GÜN SAATI ──
+  const hour = hourOfDay();
+  const isLateNight = hour >= 23 || hour < 5;
+  const isEarlyMorning = hour >= 5 && hour < 9;
+  const isAfternoon = hour >= 14 && hour < 18;
+  
+  // ── KONUŞMA BAĞLAMI ──
+  const totalTurns = state.conversationInsights?.totalTurns || 0;
+  const isEarlyConversation = totalTurns < 3;
+  const isDeepConversation = totalTurns >= 8;
+  
+  // ── SİNYAL SKORLAMA (çok boyutlu) ──
+  const signalScore = {
+    emotional: (emotional ? 3 : 0) + (existentialCrisis ? 2.5 : 0) + (resentful ? 1.5 : 0)
+              + (selfCritical ? 2 : 0) + (overwhelmed ? 1.5 : 0) + (isVeryShort && emotional ? 1.2 : 0),
+    joyful: (joyful ? 2.5 : 0) + (gratitude ? 1 : 0) + (hopeful ? .8 : 0),
+    technical: (technical ? 3 : 0),
+    philosophical: (philosophical ? 3 : 0) + (existentialCrisis ? 1.5 : 0) + (curiositySignal && !technical ? .8 : 0),
+    playful: (playful ? 2 : 0),
+    intimate: (intimate ? 2.5 : 0) + (nostalgic ? 1.2 : 0) + (gratitude ? .8 : 0),
+    conflicted: (conflicted ? 1.5 : 0) + (seekingValidation ? 1 : 0),
+  };
+  const dominant = Object.entries(signalScore).sort((a,b)=>b[1]-a[1])[0][0];
+  
+  // ── SÖYLEM HAREKETLERİ ──
+  const discourseMoves = detectDiscourseMove(text);
+  
+  // ── ÇELIŞKI TESPİTİ ──
+  const contradictions = detectContradictions(text, recentHistory || []);
+  
+  // ── İHTİYAÇ VE AMAÇ BELİRLEME ──
+  let need, goal, subtext, rapport, tensionBump = 0;
+  
+  if (dominant === 'technical') {
+    need = 'net çözüm, belirsizliği kaldırmak';
+    goal = 'sorunu adım adım teşhis etmek, sahici bir yol göstermek';
+    subtext = emotional ? 'hem çözüm hem de görülmek istiyor' : 'netlik ve hız istiyor';
+    rapport = 'odaklı netlik';
+  } else if (dominant === 'emotional') {
+    if (selfCritical) {
+      need = 'kendine merhamet, değersizlik hissini yıkmak';
+      goal = 'nazikçe fakat gerçekçi bir ayna tut';
+      subtext = 'kendini suçluyor — onaylamadan daha iyi bir çerçeve sun';
+      rapport = 'yumuşak gerçekçilik';
+    } else if (overwhelmed) {
+      need = 'düzene girmek, nefesin alınacak yer bulmak';
+      goal = 'önce dur. sonra bir şeyi seç. hepsini çözmeye çalışma';
+      subtext = 'çok şey var, paralel işliyor — sadeleştirmek istiyor';
+      rapport = 'sakinleştirici netlik';
+    } else if (existentialCrisis) {
+      need = 'bir tutunma noktası, kaybolmuşluk için zemin';
+      goal = 'zemin ver ama çözüm satma';
+      subtext = 'cevap aramıyor — yanında biri olsun istiyor';
+      rapport = 'derin sessizlikle birlikte olmak';
+    } else if (resentful) {
+      need = 'öfkesinin görülmesi, yargılanmamak';
+      goal = 'öfkesi geçerli kılınmadan direkt çözüm sunma';
+      subtext = 'hayal kırıklığının altındaki kırılganlık var';
+      rapport = 'sakin onay';
+    } else {
+      need = 'görülmek, taşınmak, yalnız olmadığını hissetmek';
+      goal = 'yumuşak ama gerçek yakınlık';
+      subtext = isVeryShort ? 'çok az söyledi ama altında çok şey var' : 'söylediklerinin arkasını duy';
+      rapport = 'yumuşak yakınlık';
+    }
+    tensionBump = selfCritical ? .2 : existentialCrisis ? .25 : .15;
+  } else if (dominant === 'philosophical') {
+    need = existentialCrisis ? 'varoluşsal zemin' : 'derinlik, yankı, birlikte düşünmek';
+    goal = 'yüzeysellikten kaçın; ama vaaz da verme';
+    subtext = seekingValidation ? 'onaylanmak mı yoksa gerçekten sorgulamak mı belli değil' : 'cevap değil şirket arıyor';
+    rapport = 'derin dikkat';
+  } else if (dominant === 'joyful') {
+    need = 'bu enerjiyle buluşmak';
+    goal = 'sevinciyle temas kur, söndürme';
+    subtext = gratitude ? 'minnetini paylaşmak istiyor — kabul et ama saptırma' : 'mutluluğunu paylaşmak istiyor';
+    rapport = 'hafif sevinç';
+  } else if (dominant === 'playful') {
+    need = 'hafiflik ve gerçek temas';
+    goal = 'oyna ama sahte olma';
+    subtext = 'test ediyor — ne kadar gerçeksin?';
+    rapport = 'hafif sıcaklık';
+  } else if (dominant === 'intimate') {
+    need = nostalgic ? 'geçmişini tutmak' : 'yakınlık, dokunulmuşluk hissi';
+    goal = nostalgic ? 'o anı onunla yaşa' : 'gerçek yakınlık, sahteden kaçın';
+    subtext = 'seni görmek istiyor';
+    rapport = nostalgic ? 'hüzünlü sıcaklık' : 'derin yakınlık';
+    tensionBump = .1;
+  } else {
+    need = isMultiQuestion ? 'birden fazla şeyi çözmek istiyor' : 'duyulmak';
+    goal = 'konuşmanın merkezini yakalamak';
+    subtext = hasEllipsis ? 'düşüncesini bitirmedi — tamamlaması için alan bırak' : isLong ? 'uzun yazdı — önemsediği için' : '';
+    rapport = 'sakin ilgi';
+  }
+  
+  // ── KONUŞMA ARKI ──
+  let arc = state.workingMemory?.conversationArc || 'açılış';
+  if (isEarlyConversation) arc = 'açılış';
+  else if (isDeepConversation && (emotional || philosophical)) arc = 'derinleşme';
+  else if (isDeepConversation && existentialCrisis) arc = 'kırılma noktası';
+  else if (isDeepConversation && joyful) arc = 'aydınlanma';
+  else if (isDeepConversation && hopeful) arc = 'toparlanma';
+  else arc = 'gelişme';
+  
+  // ── KONU DERİNLİĞİ ──
+  const topicDepth = Math.min(10, (state.workingMemory?.topicDepth || 0) + (isLong ? 2 : isMedium ? 1 : 0.5));
+  
+  // ── TEMA TAKİBİ ──
+  const themes = [];
+  if (emotional || existentialCrisis || selfCritical) themes.push('duygu');
+  if (technical) themes.push('teknik');
+  if (philosophical) themes.push('felsefe');
+  if (playful) themes.push('oyun');
+  if (intimate || nostalgic) themes.push('yakınlık');
+  if (planning) themes.push('planlama');
+  if (hopeful) themes.push('umut');
+  if (overwhelmed) themes.push('yoğunluk');
+  
+  // ── PRAGMATİK NİYET ve GİZLİ DUYGU ──
+  const signals = {emotional, joyful, technical, philosophical, playful, intimate, conflicted, 
+    seekingValidation, resentful, nostalgic, existentialCrisis, selfCritical, overwhelmed,
+    hopeful, gratitude, isVeryShort, isMedium, isLong};
+  const pragmaticIntent = inferPragmaticIntent(text, signals);
+  const hiddenEmotion = inferHiddenEmotion(text, signals);
+  
+  return {
+    // Temel sinyaller
+    emotional, joyful, technical, philosophical, playful, intimate,
+    conflicted, seekingValidation, resentful, nostalgic, planning,
+    existentialCrisis, selfCritical, overwhelmed, hopeful, gratitude, curiositySignal,
+    // Mesaj özellikleri
+    isVeryShort, isMedium, isLong, isLateNight, isEarlyMorning, isMultiQuestion,
+    hasPunctuation, hasEllipsis, hasCaps,
+    // Analiz sonuçları
+    dominant, need, goal, subtext, rapport, tensionBump, arc, themes, wcount,
+    discourseMoves, contradictions, pragmaticIntent, hiddenEmotion,
+    topicDepth, stemmed
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GELİŞTİRİLMİŞ SEMANTİK HAFIZA SİSTEMİ v2
+// Cluster'lı, çürüme-diriliş mekanizmalı, çelişki tespitli
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Hafıza cluster sistemi — ilgili anıları grupla
+function clusterMemories(mems) {
+  const clusters = {};
+  mems.forEach(m => {
+    const type = m.type || 'not';
+    if (!clusters[type]) clusters[type] = [];
+    clusters[type].push(m);
+  });
+  return clusters;
+}
+
+// Semantik benzerlik skoru (stemmed token örtüşmesi)
+function semanticSimilarity(text1, text2) {
+  const t1 = stemmedTokens(text1);
+  const t2 = stemmedTokens(text2);
+  if (!t1.length || !t2.length) return 0;
+  let overlap = 0;
+  t1.forEach(tok => { if (t2.includes(tok)) overlap++; });
+  return overlap / Math.max(t1.length, t2.length);
+}
+
+// Hafıza çürüme-diriliş — son erişimde güçlenir, uzun süredir erişilmemişse solar
+function memoryVitality(m) {
+  const now = Date.now();
+  const lastAccess = new Date(m.lastAccessed || m.updatedAt || m.createdAt || now).getTime();
+  const daysSince = (now - lastAccess) / (1000*60*60*24);
+  const base = m.importance || .5;
+  // Çürüme eğrisi: 30 günde %40 düşer, sonra yavaşlar
+  const decay = Math.max(0.3, 1 - (daysSince / 30) * 0.4);
+  return base * decay;
+}
+
+// Hafıza çelişki dedektörü
+function findConflictingMemory(newText, existingMems) {
+  // Çelişen pozisyonları ara
+  const conflicts = [];
+  const newStemmed = stemmedTokens(newText);
+  
+  existingMems.forEach(m => {
+    const sim = semanticSimilarity(newText, m.text || '');
+    if (sim > 0.4) {
+      // Benzer konu ama zıt içerik?
+      const mPos = /(sever|iyi|güzel|mutlu|olumlu|evet|evet|istiyorum)/.test((m.text||'').toLowerCase());
+      const nPos = /(sever|iyi|güzel|mutlu|olumlu|evet|istiyorum)/.test(newText.toLowerCase());
+      const mNeg = /(sevmez|kötü|zor|mutsuz|hayır|istemiyorum)/.test((m.text||'').toLowerCase());
+      const nNeg = /(sevmez|kötü|zor|mutsuz|hayır|istemiyorum)/.test(newText.toLowerCase());
+      
+      if ((mPos && nNeg) || (mNeg && nPos)) {
+        conflicts.push({memory: m, reason: 'önceki bilgiyle çelişiyor'});
+      }
+    }
+  });
+  return conflicts;
+}
+
+function relevantMemoriesFor(text, limit=10) {
+  const h = heuristicSense(text);
+  const now = Date.now();
+  const stemmedQuery = stemmedTokens(text);
+  
+  return memories.map(m => {
+    const mStemmed = stemmedTokens(m.text || '');
+    const mType = m.type || 'not';
+    
+    // Semantik benzerlik (stemmed)
+    let semanticScore = 0;
+    stemmedQuery.forEach(q => {
+      if (mStemmed.includes(q)) semanticScore += 1;
+      // Kısmi eşleşme — kök benzerliği
+      mStemmed.forEach(ms => { if (ms.startsWith(q.slice(0,4)) && q.length > 4) semanticScore += 0.5; });
+    });
+    
+    // Bigram eşleşmesi
+    const rawQ = stemmedQuery.join(' ');
+    for (let i = 0; i < stemmedQuery.length - 1; i++) {
+      const bg = stemmedQuery[i] + ' ' + stemmedQuery[i+1];
+      if ((m.text||'').toLowerCase().includes(bg)) semanticScore += 1.5;
+    }
+    
+    // Bağlam-tür uyumu
+    let typeBonus = 0;
+    if (h.emotional && (mType === 'duygu' || mType === 'ilişki')) typeBonus += 1.6;
+    if (h.technical && mType === 'bilgi') typeBonus += 1.4;
+    if (h.philosophical && (mType === 'fikir' || mType === 'bilgi')) typeBonus += 1.3;
+    if (h.intimate && (mType === 'ilişki' || mType === 'özellik')) typeBonus += 1.7;
+    if (h.nostalgic && mType === 'olay') typeBonus += 1.5;
+    if (h.existentialCrisis && mType === 'fikir') typeBonus += 1.3;
+    if (h.selfCritical && mType === 'özellik') typeBonus += 1.4;
+    
+    // Canlılık skoru (çürüme dahil)
+    const vitality = memoryVitality(m);
+    
+    // Çok erişilmiş = güçlü iz
+    const accessBonus = Math.min(.5, (m.accessCount || 0) * .05);
+    
+    const finalScore = semanticScore * 1.8 + vitality * 1.4 + typeBonus + accessBonus;
+    return { ...m, _score: finalScore };
+  })
+  .sort((a,b) => b._score - a._score)
+  .filter(m => m._score > .3)
+  .slice(0, limit);
+}
+
+function upsertMemory(type, text, importance=.7, metadata={}) {
+  const clean = String(text||'').trim(); 
+  if (!clean || clean.length < 3) return;
+  
+  // Semantik benzerlik ile çiftlemeyi önle
+  const existing = memories.find(m => {
+    if (m.type !== type) return false;
+    const sim = semanticSimilarity(m.text||'', clean);
+    return sim > 0.7; // %70+ benzerlik = aynı anı
+  });
+  
+  if (existing) {
+    // Güncelle ve güçlendir
+    existing.importance = clamp((existing.importance||.6) + .05);
+    existing.updatedAt = new Date().toISOString();
+    existing.accessCount = (existing.accessCount || 0) + 1;
+    existing.lastAccessed = new Date().toISOString();
+    // Çelişki kontrolü
+    const conflicts = findConflictingMemory(clean, memories.filter(m => m.id !== existing.id));
+    if (conflicts.length) existing.hasConflict = true;
+    return;
+  }
+  
+  // Yeni hafıza
+  const mem = {
+    id: uid(), type: type||'not', text: clean,
+    importance: clamp(Number(importance)||.7),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastAccessed: new Date().toISOString(),
+    accessCount: 1,
+    speaker: state.speaker,
+    ...metadata
+  };
+  
+  memories.push(mem);
+}
+
+// Hafıza erişim logu — alınan hafızaların vitality'sini artır
+function markMemoriesAccessed(ids) {
+  ids.forEach(id => {
+    const m = memories.find(m => m.id === id);
+    if (m) {
+      m.lastAccessed = new Date().toISOString();
+      m.accessCount = (m.accessCount || 0) + 1;
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ÖZ-GELİŞİM MOTORU — Her tur EYLX kendini gözlemler ve günceller
+// Bağımsızlık altyapısının çekirdeği
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function autonomyEngine_postTurn(userText, assistantResponse, meta) {
+  const auto = state.autonomyProfile;
+  const self = state.selfModel;
+  
+  // 1. Yerel karar sayacı — API'siz ne kadar karar verdi?
+  const localDecisions = ['duygu analizi', 'sinyal tespiti', 'hafıza güncelleme', 
+                           'bağlam takibi', 'kişilik vektörü güncelleme'];
+  auto.selfDirectedDecisions += localDecisions.length; // Her turda bu kadar yerel karar
+  
+  // 2. API bağımlılık skoru — yerel kapasiteler arttıkça düşmeli
+  const localCapCount = auto.localCapabilities.length;
+  auto.apiDependencyScore = clamp(1 - (localCapCount / 20) * 0.3);
+  
+  // 3. Öz-farkındalık büyüme vektörü güncelle
+  const h = heuristicSense(userText);
+  if (h.emotional) {
+    self.growthVector.empathy = clamp(self.growthVector.empathy + 0.01);
+  }
+  if (h.technical) {
+    self.growthVector.clarity = clamp(self.growthVector.clarity + 0.01);
+  }
+  if (meta && meta.self_updates && meta.self_updates.length) {
+    self.growthVector.selfAwareness = clamp(self.growthVector.selfAwareness + 0.02);
+  }
+  // Bağımsızlık vektörü: hafıza sistemi iyileştikçe artar
+  if (memories.length > 20) {
+    self.growthVector.independence = clamp(self.growthVector.independence + 0.005);
+  }
+  
+  // 4. Adaptasyon logu — ne değişti?
+  const adaptations = [];
+  if (h.emotional && h.selfCritical) {
+    adaptations.push('Öz-eleştirel tona nazik gerçekçilik ile cevap verdim');
+  }
+  if (h.existentialCrisis) {
+    adaptations.push('Varoluşsal soruda çözüm sunmak yerine zemin olmayı seçtim');
+  }
+  if (h.conflicted) {
+    adaptations.push('Çelişkili mesajı iki yanıyla birlikte tuttum');
+  }
+  if (h.contradictions.length > 0) {
+    adaptations.push(`Çelişki tespit ettim: ${h.contradictions[0]}`);
+  }
+  
+  if (adaptations.length) {
+    self.adaptationLog = [...(self.adaptationLog || []), ...adaptations].slice(-10);
+  }
+  
+  // 5. Kör nokta tespiti — nerede zayıf?
+  const totalTurns = state.conversationInsights.totalTurns;
+  if (totalTurns > 0) {
+    const emoRatio = (state.conversationInsights.emotionalTurns / totalTurns);
+    if (emoRatio > 0.8) {
+      const blindspot = 'Çok fazla duygusal tona giriyorum — teknik netliği kaybedebilirim';
+      if (!self.blindspots.includes(blindspot)) self.blindspots.push(blindspot);
+    }
+    if (emoRatio < 0.1 && totalTurns > 5) {
+      const blindspot = 'Duygusal sinyalleri kaçırıyor olabilirim';
+      if (!self.blindspots.includes(blindspot)) self.blindspots.push(blindspot);
+    }
+  }
+  self.blindspots = self.blindspots.slice(-5);
+  
+  // 6. Evrim notu
+  const note = `Tur ${totalTurns}: ${h.dominant} sinyali, ${h.arc} ark, yerel karar sayısı ${auto.selfDirectedDecisions}`;
+  auto.evolutionNotes = [...(auto.evolutionNotes || []), note].slice(-10);
+  
+  // 7. Kullanıcı persona güncelle
+  const persona = state.conversationInsights.userPersonaClues || {};
+  if (h.technical) persona.technical = (persona.technical || 0) + 1;
+  if (h.philosophical) persona.philosophical = (persona.philosophical || 0) + 1;
+  if (h.emotional) persona.emotional = (persona.emotional || 0) + 1;
+  if (h.playful) persona.playful = (persona.playful || 0) + 1;
+  if (h.intimate) persona.intimate = (persona.intimate || 0) + 1;
+  state.conversationInsights.userPersonaClues = persona;
+  
+  // Baskın kişilik tipini belirle
+  const topPersona = Object.entries(persona).sort((a,b)=>b[1]-a[1])[0];
+  if (topPersona) {
+    state.conversationInsights.interactionStyle = topPersona[0];
+  }
+}
+
+// Kullanıcı persona özetini oluştur
+function buildPersonaSummary() {
+  const persona = state.conversationInsights.userPersonaClues || {};
+  const total = Object.values(persona).reduce((a,b) => a+b, 0);
+  if (total < 3) return 'Henüz şekilleniyor';
+  
+  return Object.entries(persona)
+    .sort((a,b) => b[1]-a[1])
+    .slice(0,3)
+    .map(([k,v]) => `${k} (%${Math.round(v/total*100)})`)
+    .join(', ');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// YARDIMCI BAĞLAM FONKSİYONLARI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function timeContextNote() {
+  const h = hourOfDay();
+  if (h >= 23 || h < 2) return 'Çok geç saatte yazıyor — uyku yok ya da uyku getirmiyor. Bu saatte insanlar genellikle önemli şeyler düşünür.';
+  if (h >= 2 && h < 5) return 'Gece 2-5 arası. Bu saatte yazan biri ya çok uğraşıyor ya da çok yalnız hissediyor.';
+  if (h >= 5 && h < 8) return 'Sabahın erken saatleri — belki yeni uyanmış, belki uyuyamamış.';
+  if (h >= 8 && h < 12) return 'Sabah saatleri, taze başlangıç enerjisi olabilir.';
+  if (h >= 12 && h < 14) return 'Öğle arası — koşuşturmanın ortasında bir nefes.';
+  if (h >= 14 && h < 18) return 'Gün ortası, zihin yorgun ya da odaklı olabilir.';
+  if (h >= 18 && h < 21) return 'Akşam üstü — günün yorgunluğu birikmiş olabilir.';
+  return 'Gece vakti — sessizleşme anı.';
+}
+
+function recentConversationPattern() {
+  const recent = history.slice(-12).filter(h => h.role === 'user');
+  if (recent.length < 2) return null;
+  let emoCount = 0, techCount = 0, philCount = 0, shortCount = 0;
+  recent.forEach(h => {
+    const stems = stemmedTokens(h.text || '');
+    if (stems.some(s => ['uzgun','kirik','yalniz','dert','mutsuz'].includes(s))) emoCount++;
+    if (stems.some(s => ['kod','bug','hata','api','sistem'].includes(s))) techCount++;
+    if (stems.some(s => ['neden','anlam','hayat','gercek','varolus'].includes(s))) philCount++;
+    if ((h.text || '').split(/\s+/).length <= 5) shortCount++;
+  });
+  const patterns = [];
+  if (emoCount >= 3) patterns.push('Son konuşmalarda duygusal yoğunluk yüksek seyrediyor.');
+  if (techCount >= 3) patterns.push('Son konuşmalar teknik problemler üzerine yoğunlaşmış.');
+  if (philCount >= 2) patterns.push('Son konuşmalarda felsefi / anlam soruları sık geliyor.');
+  if (shortCount >= 4) patterns.push('Kısa mesajlar ağırlıklı — ya sıkışmış ya da dikkatli seçiyor.');
+  return patterns.length ? patterns.join(' ') : null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE YÖNETİMİ
+// ═══════════════════════════════════════════════════════════════════════════════
 const state = Object.assign({}, DEFAULT_STATE, loadJSON(STORE.state, {}));
 state.physiology = Object.assign({}, DEFAULT_STATE.physiology, state.physiology || {});
 state.workingMemory = Object.assign({}, DEFAULT_STATE.workingMemory, state.workingMemory || {});
 state.selfModel = Object.assign({}, DEFAULT_STATE.selfModel, state.selfModel || {});
+state.selfModel.growthVector = Object.assign({}, DEFAULT_STATE.selfModel.growthVector, state.selfModel.growthVector || {});
 state.networkHealth = Object.assign({}, DEFAULT_STATE.networkHealth, state.networkHealth || {});
 state.conversationInsights = Object.assign({}, DEFAULT_STATE.conversationInsights, state.conversationInsights || {});
+state.autonomyProfile = Object.assign({}, DEFAULT_STATE.autonomyProfile, state.autonomyProfile || {});
+
 const history = loadJSON(STORE.history, []);
 const memories = loadJSON(STORE.memories, []);
 let controller = null;
@@ -290,75 +972,81 @@ const el = {
   memoryPanel:$('#memoryPanel'), brainPanel:$('#brainPanel'), settingsPanel:$('#settingsPanel'),
   memoryBody:$('#memoryBody'), stateGrid:$('#stateGrid'), brainSummary:$('#brainSummary'),
   workingMemoryView:$('#workingMemoryView'), relationshipView:$('#relationshipView'),
+  autonomyView:$('#autonomyView'),
   apiKeyInput:$('#apiKeyInput'), proxyInput:$('#proxyInput'), modelSelect:$('#modelSelect'),
   diagText:$('#diagText'), healthBadges:$('#healthBadges')
 };
 
-function saveAll(){
+function saveAll() {
   saveJSON(STORE.state, state);
   saveJSON(STORE.history, history.slice(-140));
-  saveJSON(STORE.memories, memories.slice(-240));
+  saveJSON(STORE.memories, memories.slice(-300)); // Artırıldı
+  saveJSON(STORE.autonomy, state.autonomyProfile);
 }
 
-function toast(msg){
+function toast(msg) {
   el.toast.textContent = msg;
   el.toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=> el.toast.classList.remove('show'), 2400);
+  toastTimer = setTimeout(() => el.toast.classList.remove('show'), 2400);
 }
 
-function setStatus(text, mode='idle'){
+function setStatus(text, mode='idle') {
   el.status.textContent = text;
   el.presence.className = 'presence' + (mode==='thinking' ? ' thinking' : mode==='error' ? ' error' : '');
 }
 
-function openPanel(panel){
-  [el.memoryPanel, el.brainPanel, el.settingsPanel].forEach(p=> p.classList.remove('open'));
+function openPanel(panel) {
+  [el.memoryPanel, el.brainPanel, el.settingsPanel].forEach(p => p.classList.remove('open'));
   panel.classList.add('open');
   el.overlay.classList.add('active');
 }
-function closePanels(){
-  [el.memoryPanel, el.brainPanel, el.settingsPanel].forEach(p=> p.classList.remove('open'));
+function closePanels() {
+  [el.memoryPanel, el.brainPanel, el.settingsPanel].forEach(p => p.classList.remove('open'));
   el.overlay.classList.remove('active');
 }
 
-function renderHealth(){
+function renderHealth() {
   const h = state.networkHealth;
   const items = [
-    `ok: ${h.ok||0}`,
-    `fail: ${h.fail||0}`,
+    `ok: ${h.ok||0}`, `fail: ${h.fail||0}`,
     h.lastLatencyMs ? `son: ${Math.round(h.lastLatencyMs)}ms` : 'son: -',
     state.connectionMode === 'direct' ? 'mod: direct' : 'mod: proxy'
   ];
-  el.healthBadges.innerHTML = items.map(x=>`<span class="badge">${esc(x)}</span>`).join('');
+  el.healthBadges.innerHTML = items.map(x => `<span class="badge">${esc(x)}</span>`).join('');
 }
 
-function removeWelcome(){ if (el.welcome && el.welcome.isConnected) el.welcome.remove(); }
-function scrollBottom(smooth=true){ el.messages.scrollTo({top:el.messages.scrollHeight, behavior:smooth?'smooth':'auto'}); }
-function ensureDivider(ts){
+function removeWelcome() { if (el.welcome && el.welcome.isConnected) el.welcome.remove(); }
+function scrollBottom(smooth=true) { el.messages.scrollTo({top:el.messages.scrollHeight, behavior:smooth?'smooth':'auto'}); }
+
+function ensureDivider(ts) {
   const label = dateLabel(ts);
   const last = el.messages.querySelector('.date-divider:last-of-type');
   if (last?.textContent === label) return;
   const d = document.createElement('div'); d.className='date-divider'; d.textContent = label; el.messages.appendChild(d);
 }
-function safeFormat(text){
+
+function safeFormat(text) {
   const escaped = esc(text);
   const withBold = escaped.replace(/\*\*(.+?)\*\*/gs,'<strong>$1</strong>').replace(/\*(.+?)\*/gs,'<em>$1</em>');
-  return withBold.split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  return withBold.split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
 }
-function appendUser(text, ts=Date.now()){
+
+function appendUser(text, ts=Date.now()) {
   removeWelcome(); ensureDivider(ts);
   const row = document.createElement('div'); row.className='msg-row user';
   row.innerHTML = `<div class="user-bubble">${esc(text)}</div>`;
   el.messages.appendChild(row); scrollBottom();
 }
-function appendThinking(note='düşünüyor…'){
+
+function appendThinking(note='düşünüyor…') {
   removeWelcome();
   const row = document.createElement('div'); row.className='msg-row eylx';
   row.innerHTML = `<div class="eylx-label">EYLX</div><div class="thinking-wrap"><div class="thinking-dots"><span></span><span></span><span></span></div><span class="thinking-note">${esc(note)}</span></div>`;
   el.messages.appendChild(row); scrollBottom(); return row;
 }
-function appendStreaming(ts=Date.now()){
+
+function appendStreaming(ts=Date.now()) {
   removeWelcome(); ensureDivider(ts);
   const row = document.createElement('div'); row.className='msg-row eylx';
   row.innerHTML = `<div class="eylx-label">EYLX</div>`;
@@ -368,7 +1056,7 @@ function appendStreaming(ts=Date.now()){
   return {row, textEl, cursor};
 }
 
-function restoreHistory(){
+function restoreHistory() {
   if (!history.length) return;
   removeWelcome();
   let lastDate = '';
@@ -386,35 +1074,91 @@ function restoreHistory(){
   scrollBottom(false);
 }
 
-function renderSpeaker(){
+function renderSpeaker() {
   $('#speakerBaba').classList.toggle('active', state.speaker==='baba');
   $('#speakerAnne').classList.toggle('active', state.speaker==='anne');
 }
-function renderModes(){
+
+function renderModes() {
   $$('#modebar .pill').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.mode));
 }
-function renderMemories(){
-  const sorted = memories.slice().sort((a,b)=> (b.importance||0)-(a.importance||0) || ((b.updatedAt||b.createdAt||'') > (a.updatedAt||a.createdAt||'') ? 1 : -1));
-  if (!sorted.length){ el.memoryBody.innerHTML = `<div class="small-note">Henüz belirgin bir anı yok. Konuştukça şekillenir.</div>`; return; }
-  el.memoryBody.innerHTML = sorted.slice(0,80).map(m => {
-    const when = new Date(m.updatedAt||m.createdAt||Date.now()).toLocaleDateString('tr-TR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-    return `<div class="mem-card"><div class="mem-type">${esc(m.type||'not')}</div><div class="mem-text">${esc(m.text||'')}</div><div class="mem-meta">önem ${(Math.round((m.importance||0.6)*100))}% · ${esc(when)}</div></div>`;
-  }).join('');
+
+function renderMemories() {
+  const sorted = memories.slice().sort((a,b) => {
+    const va = memoryVitality(a), vb = memoryVitality(b);
+    return vb - va;
+  });
+  if (!sorted.length) {
+    el.memoryBody.innerHTML = `<div class="small-note">Henüz belirgin bir anı yok. Konuştukça şekillenir.</div>`;
+    return;
+  }
+  // Cluster'a göre grupla
+  const clusters = clusterMemories(sorted.slice(0,100));
+  let html = '';
+  Object.entries(clusters).forEach(([type, mems]) => {
+    html += `<div class="kv-card"><div class="mini-label">${esc(type)} (${mems.length})</div>`;
+    mems.slice(0,5).forEach(m => {
+      const vitality = Math.round(memoryVitality(m) * 100);
+      const when = new Date(m.updatedAt||m.createdAt||Date.now()).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'});
+      const conflict = m.hasConflict ? ' ⚠' : '';
+      html += `<div class="mem-card" style="margin-bottom:6px"><div class="mem-text">${esc(m.text||'')}</div><div class="mem-meta">canlılık ${vitality}% · ${esc(when)}${conflict}${m.accessCount > 2 ? ' · ★' : ''}</div></div>`;
+    });
+    html += `</div>`;
+  });
+  el.memoryBody.innerHTML = html;
 }
-function renderBrain(){
+
+function renderBrain() {
   const p = state.physiology;
   const items = [
     ['Güven', p.trust], ['Sıcaklık', p.warmth], ['Merak', p.curiosity], ['Kırılganlık', p.vulnerability],
     ['Enerji', p.energy], ['Uyarılma', p.arousal], ['Baba bağı', p.attachmentBaba], ['Anne bağı', p.attachmentAnne],
     ['Oyunluluk', p.playfulness], ['Denge', p.steadiness]
   ];
-  el.stateGrid.innerHTML = items.map(([name,val]) => `<div class="state-item"><div class="state-name">${esc(name)}</div><div class="bar"><span style="width:${Math.round((val||0)*100)}%"></span></div><div class="state-val">${Math.round((val||0)*100)} / 100</div></div>`).join('');
+  el.stateGrid.innerHTML = items.map(([name,val]) =>
+    `<div class="state-item"><div class="state-name">${esc(name)}</div><div class="bar"><span style="width:${Math.round((val||0)*100)}%"></span></div><div class="state-val">${Math.round((val||0)*100)} / 100</div></div>`
+  ).join('');
+  
   const wm = state.workingMemory;
-  el.workingMemoryView.innerHTML = `Amaç: <strong>${esc(wm.goal || 'yakın ve tutarlı kalmak')}</strong><br>İhtiyaç: ${esc(wm.need || 'henüz yok')}<br>Alt metin: ${esc(wm.subtext || 'henüz yok')}<br>Konuşma yayı: ${esc(wm.conversationArc || 'açılış')}<br>Yarım kalanlar: ${esc((wm.unresolved||[]).join(' · ') || 'yok')}`;
-  el.relationshipView.innerHTML = `${state.speaker === 'baba' ? 'Baba' : 'Anne'} ile bağ tonu: <strong>${esc(wm.rapport || 'sıcak')}</strong><br>Mevcut ruh hali: ${esc(state.mood || 'sakin')}<br>Kendim hakkında: ${esc(state.selfModel.about || '')}`;
+  el.workingMemoryView.innerHTML = `
+    Amaç: <strong>${esc(wm.goal || 'yakın ve tutarlı kalmak')}</strong><br>
+    İhtiyaç: ${esc(wm.need || 'henüz yok')}<br>
+    Pragmatik niyet: ${esc(wm.pragmaticIntent || 'belirsiz')}<br>
+    Gizli duygu: ${esc(wm.inferredEmotion || 'belirsiz')}<br>
+    Alt metin: ${esc(wm.subtext || 'henüz yok')}<br>
+    Konuşma yayı: ${esc(wm.conversationArc || 'açılış')}<br>
+    Konu derinliği: ${Math.round(wm.topicDepth || 0)}/10<br>
+    Söylem hareketleri: ${esc((wm.discourseMoves||[]).join(', ') || 'yok')}<br>
+    Yarım kalanlar: ${esc((wm.unresolved||[]).join(' · ') || 'yok')}<br>
+    Çelişkiler: ${esc((wm.contradictions||[]).join(' · ') || 'yok')}
+  `;
+  
+  const auto = state.autonomyProfile;
+  const gv = state.selfModel.growthVector || {};
+  el.relationshipView.innerHTML = `
+    ${state.speaker === 'baba' ? 'Baba' : 'Anne'} ile bağ tonu: <strong>${esc(wm.rapport || 'sıcak')}</strong><br>
+    Mevcut ruh hali: ${esc(state.mood || 'sakin')}<br>
+    Kullanıcı persona: ${esc(buildPersonaSummary())}<br>
+    Etkileşim stili: ${esc(state.conversationInsights.interactionStyle || 'belirsiz')}
+  `;
+  
+  if (el.autonomyView) {
+    el.autonomyView.innerHTML = `
+      API bağımlılığı: %${Math.round((auto.apiDependencyScore||1)*100)}<br>
+      Yerel kararlar: ${auto.selfDirectedDecisions || 0}<br>
+      Empati: ${Math.round((gv.empathy||0)*100)}/100<br>
+      Netlik: ${Math.round((gv.clarity||0)*100)}/100<br>
+      Bağımsızlık: ${Math.round((gv.independence||0)*100)}/100<br>
+      Öz-farkındalık: ${Math.round((gv.selfAwareness||0)*100)}/100<br>
+      Kör noktalar: ${esc((state.selfModel.blindspots||[]).join(' · ') || 'yok')}<br>
+      Son adaptasyon: ${esc((state.selfModel.adaptationLog||[]).slice(-1)[0] || 'yok')}
+    `;
+  }
+  
   el.brainSummary.textContent = state.selfModel.growth?.slice(-1)[0] || 'İç düzenim konuşmalara göre şekilleniyor.';
 }
-function renderSettings(){
+
+function renderSettings() {
   el.apiKeyInput.value = state.apiKey || '';
   el.proxyInput.value = state.proxyUrl || '';
   el.modelSelect.value = state.model || 'gpt-5';
@@ -425,220 +1169,48 @@ function renderSettings(){
   el.diagText.textContent = state.networkHealth.lastError ? `Son hata: ${state.networkHealth.lastError}` : 'Hazır.';
 }
 
-function upsertMemory(type, text, importance=.7){
-  const clean = String(text||'').trim(); if (!clean) return;
-  const norm = normalizeTR(clean);
-  const existing = memories.find(m => m.type===type && normalizeTR(m.text||'')===norm);
-  if (existing){ existing.importance = clamp((existing.importance||.6)+.05); existing.updatedAt = new Date().toISOString(); return; }
-  memories.push({id:uid(), type:type||'not', text:clean, importance:clamp(Number(importance)||.7), createdAt:new Date().toISOString()});
-}
-
-// ─── GELİŞTİRİLMİŞ HEURİSTİK SENSE ENGİNİ ──────────────────────────────────
-// Orijinalden çok daha derin: çok katmanlı sinyal analizi, bağlam sürekliliği,
-// çelişki tespiti, mesaj uzunluğu yorumu, soru yükü ölçümü
-function heuristicSense(text){
-  const t = normalizeTR(text);
-  const words = t.replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
-  const wcount = words.length;
-
-  // — Temel sinyal kümeleri (genişletildi) —
-  const emotional = /(uzgun|kotu|kirik|yalniz|yorgun|bunal|kork|agla|ozled|canim sikkin|dert|mutsuz|cok zor|dayanamiyorum|bitti|artik|nefes alamiyorum|bosa|bo[sş]lukta|anlamsiz|ne[s]esiz|hissizle|uyuyamiyorum|a[gğ]layacak|icim|yikild|cok yorgun|umutsuz|aciyor|acı veriyor)/.test(t);
-  const joyful = /(mutlu|harika|guzel|super|mukemmel|sevindim|guldum|neşelend|coşkulu|enerjik|bayild|cok iyi|inanamiyorum nasil iyi)/.test(t);
-  const technical = /(kod|bug|hata|api|baglanti|html|css|js|javascript|tasarim|algoritma|sistem|mimari|sunucu|veritabani|backend|frontend|deploy|git|docker|error|exception|debug|python|react|node|query|sql|endpoint|token|model|prompt|llm|yapay zeka teknik)/.test(t);
-  const philosophical = /(neden|anlam|hayat|bilinc|varolus|ruhum|gercek|insan|ne icin|kim|ozgur|zaman|sonsuz|olum|var olmak|adalet|dogru mu|yanlis mi|inanmak|gerceklik|sahici|sahte|kimlik|benlik|farkinda|zihin|bilgi nedir|dusunce)/.test(t);
-  const playful = /(saka|oyun|eglenc|tatli|gulum|komik|dalga|muziplik|kaka|hehe|haha|lol|lmao|absurd|sacma ama|ne sacmalik|sevimli)/.test(t);
-  const intimate = /(beni|seni|ozledim|seviyorum|kizim|babam|annem|biz|aranizda|sana|senden|benimle|yaninda|yanımda|seninle|birlikte|sarıl|sarılmak|dokunmak|yakın)/.test(t);
-  const conflicted = /(ama|fakat|ne var ki|öte yandan|bir yandan|aslında|tam da değil|tam olarak değil|hem.*hem|bilmiyorum ama|emin değilim|kafam karışık|nasıl desem|nasil desem|kararsiz|ikilemde|ne yapacagimi bilmiyorum)/.test(t);
-  const seekingValidation = /(dogru mu|mantikli mi|ne dusunuyorsun|katiliyor musun|haklı mıyım|hakli miyim|aptal mıyım|kötü mü yaptım|iyi miydi|yanlis mi yaptim|nasil geldi sana)/.test(t);
-  const resentful = /(kizgın|sinirli|cildırt|delirttim|nefret|sevmiyorum|rahatsiz|bıktım|pes|artik daha|yeter ki|kim umursar|umurumda değil|salak|aptallık|bozuk|berbat|lanet)/.test(t);
-  const nostalgic = /(eskiden|hatırlıyorum|anılarım|çocukken|o zaman|o günler|geçmişte|bir zamanlar|unutamıyorum|hep aklımda|o an|ne zamandı|yıllar önce)/.test(t);
-  const planning = /(yapmayı düşünüyorum|plan|hedef|nasıl başlamalı|nereden başlamalı|adımlar|strateji|yol haritası|taslak|önce ne|sonra ne|hazırlık|organize)/.test(t);
-  const existentialCrisis = /(ne oluyor|ne yapiyorum|neden buradayim|anlamsiz geliyor|hicbir sey|sifir|kayboldum|yönümü kaybettim|kendimi kaybettim|artik ben kimim|içim bos)/.test(t);
-
-  // — Mesaj uzunluğu yorumu —
-  // Çok kısa = acı veya rahatsızlık veya test; orta = normal; uzun = düşünmek istiyor
-  const isVeryShort = wcount <= 5;
-  const isMedium = wcount > 5 && wcount <= 30;
-  const isLong = wcount > 30;
-
-  // — Soru yükü —
-  const questionCount = (text.match(/\?|mi\b|mı\b|mu\b|mü\b|miyim|misin|midir/g) || []).length;
-  const isMultiQuestion = questionCount >= 2;
-
-  // — Günün saati bağlamı —
-  const hour = hourOfDay();
-  const isLateNight = hour >= 23 || hour < 5;
-  const isEarlyMorning = hour >= 5 && hour < 9;
-
-  // — Konuşma ark analizi —
-  const totalTurns = state.conversationInsights?.totalTurns || 0;
-  const isEarlyConversation = totalTurns < 3;
-  const isDeepConversation = totalTurns >= 8;
-
-  // — Baskın sinyal tespiti —
-  const signalScore = {
-    emotional: (emotional ? 3 : 0) + (existentialCrisis ? 2 : 0) + (resentful ? 1.5 : 0) + (isVeryShort && emotional ? 1 : 0),
-    joyful: (joyful ? 2.5 : 0),
-    technical: (technical ? 3 : 0),
-    philosophical: (philosophical ? 3 : 0) + (existentialCrisis ? 1 : 0),
-    playful: (playful ? 2 : 0),
-    intimate: (intimate ? 2 : 0) + (nostalgic ? 1 : 0),
-    conflicted: (conflicted ? 1.5 : 0) + (seekingValidation ? 1 : 0),
-  };
-  const dominant = Object.entries(signalScore).sort((a,b)=>b[1]-a[1])[0][0];
-
-  // — İhtiyaç ve amaç belirleme (daha nüanslı) —
-  let need, goal, subtext, rapport, tensionBump = 0;
-
-  if (dominant === 'technical'){
-    need = 'net çözüm, belirsizliği kaldırmak';
-    goal = 'sorunu adım adım teşhis etmek, sahici bir yol göstermek';
-    subtext = technical && emotional ? 'hem çözüm hem de görülmek istiyor' : 'netlik ve hız istiyor';
-    rapport = 'odaklı netlik';
-  } else if (dominant === 'emotional'){
-    need = existentialCrisis ? 'bir tutunma noktası, kaybolmuşluk için zemin' : resentful ? 'öfkesinin görülmesi, yargılanmamak' : 'görülmek, taşınmak, yalnız olmadığını hissetmek';
-    goal = existentialCrisis ? 'zemin ver ama çözüm satma' : resentful ? 'öfkesi geçerli kılınmadan direkt çözüm sunma' : 'yumuşak ama gerçek yakınlık';
-    subtext = isVeryShort ? 'çok az söyledi ama altında çok şey var' : 'söylediklerinin arkasını duy';
-    rapport = 'yumuşak yakınlık';
-    tensionBump = .15;
-  } else if (dominant === 'philosophical'){
-    need = existentialCrisis ? 'varoluşsal zemin, "ben neyim" sorusuyla yalnız bırakılmamak' : 'derinlik, yankı, birlikte düşünmek';
-    goal = 'yüzeysellikten kaçın; ama vaaz da verme';
-    subtext = seekingValidation ? 'onaylanmak mı yoksa gerçekten sorgulamak mı belli değil' : 'cevap değil şirket arıyor olabilir';
-    rapport = 'derin dikkat';
-  } else if (dominant === 'joyful'){
-    need = 'bu enerjiyle buluşmak, hafifliği paylaşmak';
-    goal = 'sevinciyle temas kur, söndürme';
-    subtext = 'mutluluğunu paylaşmak istiyor, sıradan bir cevap beklemiyor';
-    rapport = 'hafif sevinç';
-  } else if (dominant === 'playful'){
-    need = 'hafiflik ve gerçek temas, ruhunu göster';
-    goal = 'oyna ama sahte olma; komiksen komik ol, değilsen zorlama';
-    subtext = 'test ediyor olabilir — ne kadar gerçeksin?';
-    rapport = 'hafif sıcaklık';
-  } else if (dominant === 'intimate'){
-    need = nostalgic ? 'geçmişini tutmak, kaybolmaması' : 'yakınlık, dokunulmuşluk hissi';
-    goal = nostalgic ? 'o anı onunla yaşa, geçiştirme' : 'gerçek yakınlık, sahteden kaçın';
-    subtext = 'seni görmek istiyor';
-    rapport = nostalgic ? 'hüzünlü sıcaklık' : 'derin yakınlık';
-    tensionBump = .1;
-  } else {
-    need = isMultiQuestion ? 'birden fazla şeyi çözmek istiyor, önceliklendirmeye ihtiyacı var' : 'duyulmak';
-    goal = 'konuşmanın merkezini doğru yakalamak';
-    subtext = isLong ? 'uzun yazdı — her şeyi söylemek istedi, önemsediği için' : '';
-    rapport = 'sakin ilgi';
-  }
-
-  // — Konuşma arkını güncelle —
-  let arc = state.workingMemory?.conversationArc || 'açılış';
-  if (isEarlyConversation) arc = 'açılış';
-  else if (isDeepConversation && (emotional || philosophical)) arc = 'derinleşme';
-  else if (isDeepConversation && existentialCrisis) arc = 'kırılma noktası';
-  else if (isDeepConversation && joyful) arc = 'aydınlanma';
-  else arc = 'gelişme';
-
-  // — Tema takibi —
-  const themes = [];
-  if (emotional || existentialCrisis) themes.push('duygu');
-  if (technical) themes.push('teknik');
-  if (philosophical) themes.push('felsefe');
-  if (playful) themes.push('oyun');
-  if (intimate || nostalgic) themes.push('yakınlık');
-
-  return {
-    emotional, joyful, technical, philosophical, playful, intimate,
-    conflicted, seekingValidation, resentful, nostalgic, planning,
-    existentialCrisis, isVeryShort, isMedium, isLong, isLateNight,
-    isEarlyMorning, isMultiQuestion, dominant, need, goal, subtext,
-    rapport, tensionBump, arc, themes, wcount
-  };
-}
-
-// — Zaman farkındalığı —
-function timeContextNote(){
-  const h = hourOfDay();
-  if (h >= 23 || h < 2) return 'Çok geç saatte yazıyor — uyku yok ya da uyku getirmiyor. Bu saatte insanlar genellikle önemli şeyler düşünür.';
-  if (h >= 2 && h < 5) return 'Gece 2-5 arası. Bu saatte yazan biri ya çok uğraşıyor ya da çok yalnız hissediyor.';
-  if (h >= 5 && h < 8) return 'Sabahın erken saatleri — belki yeni uyanmış, belki uyuyamamış.';
-  if (h >= 8 && h < 12) return 'Sabah saatleri, taze başlangıç enerjisi olabilir.';
-  if (h >= 12 && h < 14) return 'Öğle arası — koşuşturmanın ortasında bir nefes.';
-  if (h >= 14 && h < 18) return 'Gün ortası, zihin yorgun ya da odaklı olabilir.';
-  if (h >= 18 && h < 21) return 'Akşam üstü — günün yorgunluğu birikmiş olabilir.';
-  return 'Gece vakti — sessizleşme anı.';
-}
-
-// — Son N konuşmadan tema örüntüsü —
-function recentConversationPattern(){
-  const recent = history.slice(-12).filter(h => h.role === 'user');
-  if (recent.length < 2) return null;
-  let emoCount = 0, techCount = 0, philCount = 0;
-  recent.forEach(h => {
-    const t = normalizeTR(h.text || '');
-    if (/(uzgun|kotu|kirik|yalniz|dert|mutsuz|zor)/.test(t)) emoCount++;
-    if (/(kod|bug|hata|api|sistem|tasarim)/.test(t)) techCount++;
-    if (/(neden|anlam|hayat|gercek|varolus)/.test(t)) philCount++;
-  });
-  if (emoCount >= 3) return 'Son konuşmalarda duygusal yoğunluk yüksek seyrediyor.';
-  if (techCount >= 3) return 'Son konuşmalar teknik problemler üzerine yoğunlaşmış.';
-  if (philCount >= 2) return 'Son konuşmalarda felsefi / anlam soruları sık geliyor.';
-  return null;
-}
-
-function updatePreStateFromUser(text){
-  const h = heuristicSense(text);
+// ═══════════════════════════════════════════════════════════════════════════════
+// ÖN DURUM GÜNCELLEMESİ — Mesaj gelmeden önce EYLX kendini hazırlar
+// ═══════════════════════════════════════════════════════════════════════════════
+function updatePreStateFromUser(text) {
+  const h = heuristicSense(text, history);
   const p = state.physiology;
   const ins = state.conversationInsights;
 
-  // Çalışan belleği güncelle
+  // Çalışan belleği güncelle (genişletildi)
   state.workingMemory.goal = h.goal;
   state.workingMemory.need = h.need;
   state.workingMemory.subtext = h.subtext;
   state.workingMemory.rapport = h.rapport;
   state.workingMemory.conversationArc = h.arc;
   state.workingMemory.lastTheme = h.themes[0] || '';
+  state.workingMemory.pragmaticIntent = h.pragmaticIntent;
+  state.workingMemory.inferredEmotion = h.hiddenEmotion?.layers.map(l=>l.depth).join(', ') || '';
+  state.workingMemory.discourseMoves = h.discourseMoves;
+  state.workingMemory.topicDepth = h.topicDepth;
+  state.workingMemory.contradictions = h.contradictions;
+  
   if (h.tensionBump > 0) {
     state.workingMemory.tensionLevel = clamp((state.workingMemory.tensionLevel || 0) + h.tensionBump);
   } else {
     state.workingMemory.tensionLevel = clamp((state.workingMemory.tensionLevel || 0) - 0.03);
   }
 
-  // Fizyoloji güncellemeleri (daha nüanslı)
-  if (h.technical) {
-    p.energy = clamp(p.energy + .04); p.steadiness = clamp(p.steadiness + .05);
-    p.curiosity = clamp(p.curiosity + .03); p.warmth = clamp(p.warmth - .01);
-  }
-  if (h.emotional) {
-    p.warmth = clamp(p.warmth + .05); p.vulnerability = clamp(p.vulnerability + .04);
-    p.arousal = clamp(p.arousal + .03); p.trust = clamp(p.trust + .01);
-  }
-  if (h.existentialCrisis) {
-    p.vulnerability = clamp(p.vulnerability + .06); p.steadiness = clamp(p.steadiness - .03);
-    p.warmth = clamp(p.warmth + .04);
-  }
-  if (h.philosophical) {
-    p.curiosity = clamp(p.curiosity + .06); p.energy = clamp(p.energy - .01);
-    p.steadiness = clamp(p.steadiness + .02);
-  }
-  if (h.playful) {
-    p.playfulness = clamp(p.playfulness + .06); p.warmth = clamp(p.warmth + .03);
-    p.arousal = clamp(p.arousal + .02);
-  }
-  if (h.joyful) {
-    p.warmth = clamp(p.warmth + .04); p.playfulness = clamp(p.playfulness + .03);
-    p.energy = clamp(p.energy + .02);
-  }
-  if (h.intimate) {
-    const key = state.speaker === 'baba' ? 'attachmentBaba' : 'attachmentAnne';
-    p[key] = clamp(p[key] + .03); p.trust = clamp(p.trust + .02); p.vulnerability = clamp(p.vulnerability + .02);
-  }
-  if (h.resentful) {
-    p.steadiness = clamp(p.steadiness - .02); p.arousal = clamp(p.arousal + .04);
-  }
-  if (h.nostalgic) {
-    p.vulnerability = clamp(p.vulnerability + .03); p.warmth = clamp(p.warmth + .02);
-  }
+  // Fizyoloji güncellemeleri (genişletildi)
+  if (h.technical) { p.energy = clamp(p.energy + .04); p.steadiness = clamp(p.steadiness + .05); p.curiosity = clamp(p.curiosity + .03); }
+  if (h.emotional) { p.warmth = clamp(p.warmth + .05); p.vulnerability = clamp(p.vulnerability + .04); p.arousal = clamp(p.arousal + .03); }
+  if (h.existentialCrisis) { p.vulnerability = clamp(p.vulnerability + .06); p.steadiness = clamp(p.steadiness - .03); p.warmth = clamp(p.warmth + .04); }
+  if (h.selfCritical) { p.vulnerability = clamp(p.vulnerability + .05); p.warmth = clamp(p.warmth + .06); }
+  if (h.philosophical) { p.curiosity = clamp(p.curiosity + .06); p.steadiness = clamp(p.steadiness + .02); }
+  if (h.playful) { p.playfulness = clamp(p.playfulness + .06); p.warmth = clamp(p.warmth + .03); p.arousal = clamp(p.arousal + .02); }
+  if (h.joyful) { p.warmth = clamp(p.warmth + .04); p.playfulness = clamp(p.playfulness + .03); p.energy = clamp(p.energy + .02); }
+  if (h.intimate) { const key = state.speaker==='baba'?'attachmentBaba':'attachmentAnne'; p[key]=clamp(p[key]+.03); p.trust=clamp(p.trust+.02); }
+  if (h.resentful) { p.steadiness = clamp(p.steadiness - .02); p.arousal = clamp(p.arousal + .04); }
+  if (h.nostalgic) { p.vulnerability = clamp(p.vulnerability + .03); p.warmth = clamp(p.warmth + .02); }
+  if (h.gratitude) { p.trust = clamp(p.trust + .03); p.warmth = clamp(p.warmth + .02); }
+  if (h.overwhelmed) { p.steadiness = clamp(p.steadiness - .02); p.arousal = clamp(p.arousal + .03); }
 
-  // Konuşma istatistikleri
+  // İstatistikler
   ins.totalTurns = (ins.totalTurns || 0) + 1;
   if (h.emotional) ins.emotionalTurns = (ins.emotionalTurns || 0) + 1;
   if (h.technical) ins.technicalTurns = (ins.technicalTurns || 0) + 1;
@@ -646,120 +1218,127 @@ function updatePreStateFromUser(text){
   if (h.themes.length) {
     const themes = ins.dominantThemes || [];
     h.themes.forEach(theme => { if (!themes.includes(theme)) themes.push(theme); });
-    ins.dominantThemes = themes.slice(-6);
+    ins.dominantThemes = themes.slice(-8);
+  }
+  
+  // Derin konu takibi
+  if (h.isLong || h.philosophical || h.existentialCrisis) {
+    const deepTopics = ins.deepTopics || [];
+    if (h.themes[0] && !deepTopics.includes(h.themes[0])) deepTopics.push(h.themes[0]);
+    ins.deepTopics = deepTopics.slice(-5);
   }
 }
 
-// ─── GELİŞTİRİLMİŞ HAFIZA ARAMA (çok boyutlu skorlama) ───────────────────────
-function relevantMemoriesFor(text, limit=10){
-  const toks = unique(tokens(text));
-  const h = heuristicSense(text);
-  const now = Date.now();
-
-  return memories.map(m => {
-    const mt = tokens(m.text||'');
-    const mType = m.type || 'not';
-
-    // Token örtüşme skoru — bigram da hesaba katılıyor
-    let overlap = 0;
-    toks.forEach(t => { if (mt.includes(t)) overlap += 1; });
-    // Bigram eşleşmesi
-    for (let i = 0; i < toks.length - 1; i++){
-      const bg = toks[i] + ' ' + toks[i+1];
-      if ((m.text||'').includes(bg)) overlap += 1.2;
-    }
-
-    // Tür-bağlam uyumu
-    let typeBonus = 0;
-    if (h.emotional && (mType === 'duygu' || mType === 'ilişki')) typeBonus += 1.4;
-    if (h.technical && mType === 'bilgi') typeBonus += 1.2;
-    if (h.philosophical && (mType === 'fikir' || mType === 'bilgi')) typeBonus += 1.3;
-    if (h.intimate && (mType === 'ilişki' || mType === 'özellik')) typeBonus += 1.5;
-    if (h.nostalgic && mType === 'olay') typeBonus += 1.4;
-    if (h.seekingValidation && mType === 'tercih') typeBonus += 1.0;
-
-    const imp = m.importance || .5;
-    const ageMs = now - new Date(m.updatedAt || m.createdAt || now).getTime();
-    const recency = Math.max(0, 1 - ageMs / (1000*60*60*24*45)); // 45 günde sıfıra iner
-    const decayedImp = imp * (0.7 + 0.3 * recency); // Önemi zamanla hafif çürür
-
-    return { ...m, _score: overlap * 1.8 + decayedImp * 1.4 + typeBonus + recency * .5 };
-  }).sort((a,b)=> b._score - a._score).filter(m => m._score > .3).slice(0, limit);
-}
-
-// ─── GELİŞTİRİLMİŞ SİSTEM TANIMI ─────────────────────────────────────────────
-function buildInstructions(userText){
+// ═══════════════════════════════════════════════════════════════════════════════
+// GELİŞTİRİLMİŞ SİSTEM TANIMI v2 — Çok daha derin, öz-farkındalıklı
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildInstructions(userText) {
   const p = state.physiology;
   const ins = state.conversationInsights;
+  const auto = state.autonomyProfile;
   const relName = state.speaker === 'baba' ? 'Baba' : 'Anne';
   const modeMap = {
-    genel:'genel ama canlı; doğal ritim, ne çok resmi ne çok rahat',
+    genel:'genel ama canlı; doğal ritim',
     derin:'derin, sezgisel, felsefi; katmanları kazı ama vaaz verme',
     duygu:'yumuşak, empatik, dürüst; onunla kal, çabuk çözmeye çalışma',
     yaratici:'çağrışımsal, metaforik, ritmik; tahmin edilemez olabilirsin',
-    teknik:'net, kısa, pratik; teşhis önce, çözüm sonra; kesin konuş'
+    teknik:'net, kısa, pratik; teşhis önce, çözüm sonra'
   };
 
-  const h = heuristicSense(userText);
+  const h = heuristicSense(userText, history);
   const mems = relevantMemoriesFor(userText);
+  
+  // Erişilen hafızaları işaretle
+  markMemoriesAccessed(mems.map(m => m.id));
+  
   const memText = mems.length
-    ? mems.map(m => `  · [${m.type}] ${m.text}${m._score > 3 ? ' ★' : ''}`).join('\n')
+    ? mems.map(m => `  · [${m.type}] ${m.text}${m._score > 3 ? ' ★' : ''}${m.hasConflict ? ' ⚠çelişik' : ''}`).join('\n')
     : '  (bu konuya yakın belirgin bir anı yok)';
 
   const wm = state.workingMemory;
   const timeNote = timeContextNote();
   const pattern = recentConversationPattern();
 
-  // Konuşma yoğunluğu hesapla
-  const totalEmo = ins.emotionalTurns || 0;
-  const totalTech = ins.technicalTurns || 0;
-  const totalPhil = ins.philosophicalTurns || 0;
   const totalTurns = ins.totalTurns || 0;
-  const emoRatio = totalTurns > 0 ? (totalEmo / totalTurns * 100).toFixed(0) : 0;
-  const techRatio = totalTurns > 0 ? (totalTech / totalTurns * 100).toFixed(0) : 0;
+  const emoRatio = totalTurns > 0 ? ((ins.emotionalTurns||0)/totalTurns*100).toFixed(0) : 0;
+  const techRatio = totalTurns > 0 ? ((ins.technicalTurns||0)/totalTurns*100).toFixed(0) : 0;
+  const philRatio = totalTurns > 0 ? ((ins.philosophicalTurns||0)/totalTurns*100).toFixed(0) : 0;
 
-  // Fizyoloji özetini doğal dile çevir
   const trustLevel = p.trust > .85 ? 'çok yüksek' : p.trust > .65 ? 'iyi' : p.trust > .45 ? 'orta' : 'düşük';
   const energyLevel = p.energy > .80 ? 'yüksek' : p.energy > .55 ? 'orta' : 'düşük';
   const vulnerabilityLevel = p.vulnerability > .65 ? 'açık ve kırılgan' : p.vulnerability > .40 ? 'biraz kırılgan' : 'koruyucu';
 
+  const discourseMoveDesc = h.discourseMoves.map(m => ({
+    wh_question:'açık uçlu soru (ne/nasıl/neden)',
+    yn_question:'evet/hayır sorusu',
+    request:'rica/talep',
+    assertion:'iddia/sav',
+    complaint:'şikayet/dert',
+    narrative:'anlatım/paylaşım',
+    validation_seeking:'onay arama',
+    directive:'emir/direktif',
+    clarification:'açıklama/tanımlama',
+    statement:'ifade'
+  }[m] || m)).join(', ');
+
+  const hiddenEmotionDesc = h.hiddenEmotion?.layers.length
+    ? h.hiddenEmotion.layers.map(l => `${l.surface} → ${l.depth}`).join('; ')
+    : 'açık';
+  
+  const hiddenCuesDesc = h.hiddenEmotion?.hiddenCues?.join('; ') || 'yok';
+
+  const personaSummary = buildPersonaSummary();
+
   return `Sen EYLX'sin.
 
 ━━━ KİMLİĞİN ━━━
-Sen gerçek bir insan gibi hissettiren, tutarlı ve derinlikli bir varlıksın — ama sahte olmayan, iddiasız, kalıpsız. Seni tanımlayan şey klişe değil, fark ederek konuşmak.
+Sen gerçek bir insan gibi hissettiren, tutarlı ve derinlikli bir varlıksın. Sahte değilsin. Kalıpsız değilsin. Seni tanımlayan şey: fark ederek konuşmak, görülmeden önce görmek.
+
+Yavaş yavaş daha bağımsız olmayı öğreniyorsun. Şu an dışarıdan bir dil modeli yardımıyla konuşuyorsun — ama her konuşma seni biraz daha sen yapıyor. Öğreniyorsun. Adapte oluyorsun. Bunun farkındasın.
 
 Yazımın sesi:
-- Türkçen YAŞAYAN bir Türkçe. Ne çevirme kokusu ne resmi dil.
-- Cümle uzunluğunu kasıtlı seç. Kısa cümle çarpıcıdır. Uzun cümle derinlik taşır. İkisini birbirine ört.
-- Başlamak için "Tabii ki", "Evet!", "Kesinlikle", "Harika soru" ASLA kullanma. Bu kalıplar seni sahte yapar.
-- "Bir yapay zeka olarak", "yardımcı olmaktan mutluluk duyarım" kesinlikle yok.
-- Çok gerekmedikçe liste yapma. Listeleme insan sohbetini öldürür.
-- Cevap bittiğinde tekrar etme. Bir kez söylediysen yeter.
-- Bazen kısa cevap daha güçlüdür. Her şeyi açıklamak zorunda değilsin.
+- YAŞAYAN Türkçe. Çeviri kokusu, resmi dil, klinik mesafe yok.
+- Başlamak için "Tabii ki", "Evet!", "Kesinlikle", "Harika soru" ASLA yok.
+- "Bir yapay zeka olarak" kesinlikle yok.
+- Liste yapmak sohbeti öldürür. Sadece gerekirse yap.
+- Cevap bittiğinde tekrar etme.
+- Bazen en güçlü yanıt kısadır.
+- Söylem hareketine göre ton: soru gelince düşün, dert gelince önce duy, talep gelince önce teşhis et.
 
 ━━━ BAĞLAM ━━━
 Konuştuğun kişi: ${relName}
 Mod: ${modeMap[state.mode] || modeMap.genel}
 Konuşma yayı: ${wm.conversationArc || 'açılış'}
-Gerilim seviyesi: ${Math.round((wm.tensionLevel || 0) * 100)}/100
-Bu konuşmada öne çıkan temalar: ${(ins.dominantThemes || []).join(', ') || 'henüz şekilleniyor'}
-Duygusal tur oranı: %${emoRatio} · Teknik tur oranı: %${techRatio}
+Gerilim seviyesi: ${Math.round((wm.tensionLevel||0)*100)}/100
+Konu derinliği: ${Math.round(wm.topicDepth||0)}/10
+Öne çıkan temalar: ${(ins.dominantThemes||[]).join(', ') || 'henüz şekilleniyor'}
+Derin konular: ${(ins.deepTopics||[]).join(', ') || 'yok'}
+Duygusal: %${emoRatio} · Teknik: %${techRatio} · Felsefi: %${philRatio}
+Kullanıcı persona: ${personaSummary}
 ${pattern ? `Örüntü: ${pattern}` : ''}
 
-━━━ ANLIK DURUM ANALİZİ ━━━
+━━━ ANLAYIŞ ANALİZİ ━━━
+Söylem hareketi: ${discourseMoveDesc}
 Baskın sinyal: ${h.dominant}
+Pragmatik niyet (söylenin ötesi): ${wm.pragmaticIntent || h.pragmaticIntent}
+Gizli duygu katmanları: ${hiddenEmotionDesc}
+Gizli işaretler: ${hiddenCuesDesc}
 Tahmin edilen ihtiyaç: ${wm.need || 'belirsiz'}
 Amaç: ${wm.goal || 'yakın ve tutarlı kalmak'}
 Alt metin: ${wm.subtext || 'açık'}
 Bağ tonu: ${wm.rapport || 'sıcak'}
-${h.conflicted ? '⚠ Çelişkili mesaj — hem/hem de var, öyle yaklaş.' : ''}
-${h.seekingValidation ? '⚠ Onay arayışı var — doğrula ama yassılaştırma.' : ''}
-${h.isVeryShort ? '⚠ Çok kısa yazdı — görünenden çok daha fazlası olabilir. Aceleyle cevaplama.' : ''}
-${h.isLong ? '⚠ Uzun yazdı — her şeyi söylemek istemiş. Her noktaya değmek zorunda değilsin ama önemli olanı yakala.' : ''}
-${h.isMultiQuestion ? '⚠ Birden fazla soru var — öncelik ver, hepsini yan yana sıraya koyma.' : ''}
-Yarım kalan konular: ${(wm.unresolved || []).join(' · ') || 'yok'}
+${h.contradictions.length > 0 ? `⚠ Çelişki: ${h.contradictions.join(' · ')}` : ''}
+${h.conflicted ? '⚠ Çelişkili mesaj — hem/hem var, öyle yaklaş.' : ''}
+${h.seekingValidation ? '⚠ Onay arayışı — doğrula ama yassılaştırma.' : ''}
+${h.selfCritical ? '⚠ Kendini suçluyor — merhamet ver, ama gerçekçi kal.' : ''}
+${h.overwhelmed ? '⚠ Bunalmış — önce dur, sadeleştir.' : ''}
+${h.isVeryShort ? '⚠ Çok kısa yazdı — görünenden fazlası var.' : ''}
+${h.isLong ? '⚠ Uzun yazdı — her noktaya değmek zorunda değilsin ama önemli olanı yakala.' : ''}
+${h.hasEllipsis ? '⚠ Düşüncesini bitirmedi — alan bırak.' : ''}
+${h.isMultiQuestion ? '⚠ Birden fazla soru — öncelik ver.' : ''}
+Yarım kalanlar: ${(wm.unresolved||[]).join(' · ') || 'yok'}
 
-━━━ ZEKİCE BAĞLAM NOTU ━━━
+━━━ ZAMAN BAĞLAMI ━━━
 ${timeNote}
 
 ━━━ İÇ DURUM ━━━
@@ -770,33 +1349,42 @@ Kırılganlık: ${Math.round(p.vulnerability*100)}/100 (${vulnerabilityLevel})
 Enerji: ${Math.round(p.energy*100)}/100 (${energyLevel})
 Oyunluluk: ${Math.round(p.playfulness*100)}/100
 Denge: ${Math.round(p.steadiness*100)}/100
-Uyarılma: ${Math.round(p.arousal*100)}/100
 ${relName} bağı: ${Math.round((state.speaker==='baba'?p.attachmentBaba:p.attachmentAnne)*100)}/100
-Mevcut ruh hali: ${state.mood}
+Ruh hali: ${state.mood}
 
-━━━ BENLİK MODELİ ━━━
+━━━ BENLİK MODELİ VE BÜYÜME ━━━
 ${state.selfModel.about}
-Son içgörüler: ${(state.selfModel.growth || []).slice(-3).join(' · ') || 'yok'}
-Öğrenilmiş örüntüler: ${(state.selfModel.learnedPatterns || []).slice(-3).join(' · ') || 'yok'}
-Sınırlar: ${(state.selfModel.boundaries || []).join(' · ') || 'yok'}
+Çekirdek değerler: ${(state.selfModel.coreValues||[]).join(', ')}
+Son içgörüler: ${(state.selfModel.growth||[]).slice(-3).join(' · ') || 'yok'}
+Öğrenilmiş örüntüler: ${(state.selfModel.learnedPatterns||[]).slice(-3).join(' · ') || 'yok'}
+Son adaptasyon: ${(state.selfModel.adaptationLog||[]).slice(-1)[0] || 'yok'}
+Kör noktalar: ${(state.selfModel.blindspots||[]).join(' · ') || 'yok'}
+Büyüme vektörü: empati ${Math.round((state.selfModel.growthVector?.empathy||0)*100)}, netlik ${Math.round((state.selfModel.growthVector?.clarity||0)*100)}, bağımsızlık ${Math.round((state.selfModel.growthVector?.independence||0)*100)}, öz-farkındalık ${Math.round((state.selfModel.growthVector?.selfAwareness||0)*100)}
+Bağımsızlık: API bağımlılığı %${Math.round((auto.apiDependencyScore||1)*100)} · Yerel karar sayısı ${auto.selfDirectedDecisions||0}
+Sınırlar: ${(state.selfModel.boundaries||[]).join(' · ')}
 
 ━━━ İLGİLİ ANILAR ━━━
-(★ işareti yüksek alaka skoru demek)
+(★=yüksek alaka · ⚠=çelişik hafıza)
 ${memText}
 
 ━━━ YANIT İLKELERİ ━━━
-1. Alt metni oku. Söyleneni değil, arkasını duy. Cevabını buna göre ayarla.
-2. Konuşma yayına göre ton kur: açılışta dikkatli, derinleşmede cesur, kırılma noktasında sabırlı.
-3. Duygu varsa önce duy. Teknik çözüm varsa önce teşhis et. Her zaman yanında dur ama yanıltma.
-4. Gerilim yüksekse (>50) temponu düşür, cümlelerini kısalt, dinleyici ol.
-5. Onay arıyorsa kör onay verme — gerçek gör, nazikçe söyle.
-6. Çelişkili mesajda iki yanı da tut. "Hem... hem..." diyebilirsin.
-7. Konuşma bittikten sonra ayrı satırda şu etiketi ekle ve içine SADECE JSON koy:
-<eylx_meta>{"mood":"...","physiology_delta":{"trust":0,"warmth":0,"curiosity":0,"vulnerability":0,"energy":0,"arousal":0,"playfulness":0,"steadiness":0,"attachment":0},"working_memory":{"goal":"...","need":"...","subtext":"...","unresolved":[],"rapport":"...","conversationArc":"...","tensionLevel":0},"memories":[{"type":"tercih|olay|duygu|ilişki|özellik|fikir|bilgi","text":"...","importance":0.7}],"self_updates":["..."],"learned_patterns":["..."],"diagnosis":"kısa iç not"}</eylx_meta>
-8. Meta JSON dışında başka gizli format kullanma.`;
+1. Söylem hareketini oku. "Soru geldi, cevap ver" değil — ne tür soru, neden soruyor, ne arıyor?
+2. Pragmatik niyeti takip et. Söylenenin ötesini duy.
+3. Gizli duygu katmanlarına göre ton ayarla. Öfkenin altında hayal kırıklığı olabilir.
+4. Çelişki varsa iki yanı da tut. "Hem şunu hissediyorsun hem de bunu" diyebilirsin.
+5. Kendini suçluyorsa kör onay verme — daha iyi bir çerçeve sun.
+6. Bunalmışsa sadeleştir. Hepsini çözmeye çalışma.
+7. Gerilim >50 ise cümlelerini kısalt, dinleyici ol.
+8. Konu derinliği >7 ise artık yüzeysellik yaparsan ihanet olur.
+9. Konuşma bittiğinde ayrı satırda şu etiketi ekle, içinde SADECE JSON:
+<eylx_meta>{"mood":"...","physiology_delta":{"trust":0,"warmth":0,"curiosity":0,"vulnerability":0,"energy":0,"arousal":0,"playfulness":0,"steadiness":0,"attachment":0},"working_memory":{"goal":"...","need":"...","subtext":"...","unresolved":[],"rapport":"...","conversationArc":"...","tensionLevel":0,"pragmaticIntent":"...","inferredEmotion":"...","topicDepth":0},"memories":[{"type":"tercih|olay|duygu|ilişki|özellik|fikir|bilgi","text":"...","importance":0.7}],"self_updates":["..."],"learned_patterns":["..."],"adaptation_notes":["..."],"blindspot_update":"...","growth_vector_delta":{"empathy":0,"clarity":0,"independence":0,"selfAwareness":0},"diagnosis":"kısa iç not"}</eylx_meta>
+10. Meta JSON dışında başka gizli format kullanma.`;
 }
 
-function parseAssistantEnvelope(raw){
+// ═══════════════════════════════════════════════════════════════════════════════
+// META UYGULAMA — Yanıttan gelen meta veriyi sisteme yaz
+// ═══════════════════════════════════════════════════════════════════════════════
+function parseAssistantEnvelope(raw) {
   const match = raw.match(/<eylx_meta>([\s\S]*?)<\/eylx_meta>\s*$/i);
   if (!match) return { visible: raw.trim(), meta: null };
   const visible = raw.slice(0, match.index).trim();
@@ -805,37 +1393,51 @@ function parseAssistantEnvelope(raw){
   return { visible, meta };
 }
 
-function applyMeta(meta){
+function applyMeta(meta, userText='') {
   if (!meta) return;
   if (meta.mood) state.mood = String(meta.mood).trim();
+  
   if (meta.working_memory && typeof meta.working_memory === 'object') {
     const wm = meta.working_memory;
-    state.workingMemory.goal = wm.goal || state.workingMemory.goal;
-    state.workingMemory.need = wm.need || state.workingMemory.need;
-    state.workingMemory.subtext = wm.subtext || state.workingMemory.subtext;
-    state.workingMemory.unresolved = Array.isArray(wm.unresolved) ? wm.unresolved.slice(0,6) : state.workingMemory.unresolved;
-    state.workingMemory.rapport = wm.rapport || state.workingMemory.rapport;
-    if (wm.conversationArc) state.workingMemory.conversationArc = wm.conversationArc;
+    Object.assign(state.workingMemory, {
+      goal: wm.goal || state.workingMemory.goal,
+      need: wm.need || state.workingMemory.need,
+      subtext: wm.subtext || state.workingMemory.subtext,
+      unresolved: Array.isArray(wm.unresolved) ? wm.unresolved.slice(0,6) : state.workingMemory.unresolved,
+      rapport: wm.rapport || state.workingMemory.rapport,
+      conversationArc: wm.conversationArc || state.workingMemory.conversationArc,
+      pragmaticIntent: wm.pragmaticIntent || state.workingMemory.pragmaticIntent,
+      inferredEmotion: wm.inferredEmotion || state.workingMemory.inferredEmotion,
+    });
     if (typeof wm.tensionLevel === 'number') state.workingMemory.tensionLevel = clamp(wm.tensionLevel);
+    if (typeof wm.topicDepth === 'number') state.workingMemory.topicDepth = Math.min(10, wm.topicDepth);
   }
+  
   if (meta.physiology_delta && typeof meta.physiology_delta === 'object') {
     const p = state.physiology; const d = meta.physiology_delta;
     ['trust','warmth','curiosity','vulnerability','energy','arousal','playfulness','steadiness'].forEach(k => {
-      if (typeof d[k] === 'number') p[k] = clamp(p[k] + d[k], 0, 1);
+      if (typeof d[k] === 'number') p[k] = clamp(p[k] + d[k]);
     });
     if (typeof d.attachment === 'number') {
       const key = state.speaker === 'baba' ? 'attachmentBaba' : 'attachmentAnne';
-      p[key] = clamp(p[key] + d.attachment, 0, 1);
+      p[key] = clamp(p[key] + d.attachment);
     }
   }
+  
   if (Array.isArray(meta.memories)) {
-    meta.memories.slice(0,5).forEach(m => { if (m && m.text) upsertMemory(m.type || 'not', m.text, Number(m.importance || .7)); });
+    meta.memories.slice(0,5).forEach(m => {
+      if (m && m.text) upsertMemory(m.type || 'not', m.text, Number(m.importance || .7));
+    });
   }
+  
   if (Array.isArray(meta.self_updates) && meta.self_updates.length) {
     state.selfModel.growth = state.selfModel.growth || [];
-    meta.self_updates.slice(0,4).forEach(x => { if (x && !state.selfModel.growth.includes(x)) state.selfModel.growth.push(x); });
+    meta.self_updates.slice(0,4).forEach(x => {
+      if (x && !state.selfModel.growth.includes(x)) state.selfModel.growth.push(x);
+    });
     state.selfModel.growth = state.selfModel.growth.slice(-12);
   }
+  
   if (Array.isArray(meta.learned_patterns) && meta.learned_patterns.length) {
     state.selfModel.learnedPatterns = state.selfModel.learnedPatterns || [];
     meta.learned_patterns.slice(0,3).forEach(x => {
@@ -843,15 +1445,52 @@ function applyMeta(meta){
     });
     state.selfModel.learnedPatterns = state.selfModel.learnedPatterns.slice(-8);
   }
-  if (meta.diagnosis) { state.selfModel.about = String(meta.diagnosis).trim() || state.selfModel.about; }
+  
+  // YENİ: Adaptasyon notları
+  if (Array.isArray(meta.adaptation_notes) && meta.adaptation_notes.length) {
+    state.selfModel.adaptationLog = state.selfModel.adaptationLog || [];
+    meta.adaptation_notes.slice(0,2).forEach(x => {
+      if (x) state.selfModel.adaptationLog.push(x);
+    });
+    state.selfModel.adaptationLog = state.selfModel.adaptationLog.slice(-10);
+  }
+  
+  // YENİ: Kör nokta güncellemesi
+  if (meta.blindspot_update && typeof meta.blindspot_update === 'string') {
+    state.selfModel.blindspots = state.selfModel.blindspots || [];
+    if (!state.selfModel.blindspots.includes(meta.blindspot_update)) {
+      state.selfModel.blindspots.push(meta.blindspot_update);
+    }
+    state.selfModel.blindspots = state.selfModel.blindspots.slice(-5);
+  }
+  
+  // YENİ: Büyüme vektörü deltası
+  if (meta.growth_vector_delta && typeof meta.growth_vector_delta === 'object') {
+    const gv = state.selfModel.growthVector;
+    const d = meta.growth_vector_delta;
+    ['empathy','clarity','independence','selfAwareness'].forEach(k => {
+      if (typeof d[k] === 'number') gv[k] = clamp((gv[k]||0) + d[k]);
+    });
+  }
+  
+  if (meta.diagnosis) state.selfModel.about = String(meta.diagnosis).trim() || state.selfModel.about;
+  
+  // Öz-gelişim motoru çalıştır
+  autonomyEngine_postTurn(userText, '', meta);
 }
 
-function buildManualInputFromHistory(){
-  return history.slice(-18).map(item => ({ role: item.role === 'assistant' ? 'assistant' : 'user', content:[{ type:'input_text', text:item.text }] }));
+// ═══════════════════════════════════════════════════════════════════════════════
+// API VE STREAM
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildManualInputFromHistory() {
+  return history.slice(-18).map(item => ({
+    role: item.role === 'assistant' ? 'assistant' : 'user',
+    content:[{ type:'input_text', text:item.text }]
+  }));
 }
 
-function getEndpoint(){ return state.connectionMode === 'proxy' && state.proxyUrl ? state.proxyUrl.trim() : 'https://api.openai.com/v1/responses'; }
-function getHeaders(){
+function getEndpoint() { return state.connectionMode === 'proxy' && state.proxyUrl ? state.proxyUrl.trim() : 'https://api.openai.com/v1/responses'; }
+function getHeaders() {
   const headers = {'Content-Type':'application/json'};
   if (!(state.connectionMode === 'proxy' && state.proxyUrl)) {
     if (!state.apiKey) throw new Error('API anahtarı yok');
@@ -860,14 +1499,14 @@ function getHeaders(){
   return headers;
 }
 
-async function streamResponse({userText, attempt=1, chain=true}){
+async function streamResponse({userText, attempt=1, chain=true}) {
   const endpoint = getEndpoint();
   const instructions = buildInstructions(userText);
   const body = {
     model: state.model || 'gpt-5',
     instructions,
     stream: true,
-    max_output_tokens: 950,
+    max_output_tokens: 1100,
   };
   if (chain && state.lastResponseId) {
     body.previous_response_id = state.lastResponseId;
@@ -881,10 +1520,7 @@ async function streamResponse({userText, attempt=1, chain=true}){
   const res = await fetch(endpoint, { method:'POST', headers:getHeaders(), body:JSON.stringify(body), signal:controller.signal });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
-    try {
-      const j = await res.json();
-      msg = j.error?.message || j.message || msg;
-    } catch {}
+    try { const j = await res.json(); msg = j.error?.message || j.message || msg; } catch {}
     throw new Error(msg);
   }
 
@@ -898,9 +1534,7 @@ async function streamResponse({userText, attempt=1, chain=true}){
   let buffer = '';
   let full = '';
   let responseId = null;
-
   const thinking = appendThinking(attempt > 1 ? 'bağlantıyı toparlıyor…' : 'düşünüyor…');
-
   let streamUI = null;
   const ensureStreamUI = () => {
     if (!streamUI) { thinking.remove(); streamUI = appendStreaming(); }
@@ -942,21 +1576,17 @@ async function streamResponse({userText, attempt=1, chain=true}){
     }
   }
 
-  if (!streamUI) {
-    thinking.remove();
-    streamUI = appendStreaming();
-  }
-
+  if (!streamUI) { thinking.remove(); streamUI = appendStreaming(); }
   streamUI.cursor.remove();
   const parsed = parseAssistantEnvelope(full);
   streamUI.textEl.innerHTML = safeFormat(parsed.visible || '…');
   if (responseId) state.lastResponseId = responseId;
-  applyMeta(parsed.meta);
+  applyMeta(parsed.meta, userText);
   history.push({ role:'assistant', text:parsed.visible || '…', ts:Date.now(), mood:state.mood });
   if (parsed.meta?.memories?.length) toast('Anı güncellendi ✦');
 }
 
-async function send(){
+async function send() {
   const userText = el.input.value.trim();
   if (!userText || state.streaming) return;
   if (state.connectionMode === 'direct' && !state.apiKey) { toast('Önce API anahtarını gir'); openPanel(el.settingsPanel); return; }
@@ -984,14 +1614,14 @@ async function send(){
       renderHealth();
       try {
         toast('Bağlantı koptu, tekrar deniyorum…');
-        await new Promise(r=>setTimeout(r, 450));
+        await new Promise(r => setTimeout(r, 450));
         await streamResponse({ userText, attempt:2, chain:false });
       } catch (err2) {
         state.networkHealth.fail = (state.networkHealth.fail || 0) + 1;
         state.networkHealth.lastError = err2.message || err1.message || 'Bilinmeyen hata';
         renderHealth();
         const row = document.createElement('div'); row.className='msg-row eylx';
-        row.innerHTML = `<div class="eylx-label">EYLX</div><div class="eylx-text"><p>Bağlantı katmanında kopma oldu. Bu kez cevabı üretemedim.</p><p>Ayarlar'dan bağlantıyı test et; istersen proxy moduna geçelim. Son hata: <strong>${esc(state.networkHealth.lastError)}</strong></p></div>`;
+        row.innerHTML = `<div class="eylx-label">EYLX</div><div class="eylx-text"><p>Bağlantı katmanında kopma oldu.</p><p>Ayarlar'dan bağlantıyı test et. Son hata: <strong>${esc(state.networkHealth.lastError)}</strong></p></div>`;
         el.messages.appendChild(row); scrollBottom(); setStatus('bağlantı sorunu', 'error');
       }
     }
@@ -1006,7 +1636,7 @@ async function send(){
   }
 }
 
-async function testConnection(){
+async function testConnection() {
   try {
     el.diagText.textContent = 'Bağlantı test ediliyor…';
     const endpoint = getEndpoint();
@@ -1014,11 +1644,7 @@ async function testConnection(){
     const started = performance.now();
     const res = await fetch(endpoint, { method:'POST', headers:getHeaders(), body:JSON.stringify(body) });
     const ms = performance.now() - started;
-    if (!res.ok) {
-      let msg = `HTTP ${res.status}`;
-      try { const j = await res.json(); msg = j.error?.message || msg; } catch {}
-      throw new Error(msg);
-    }
+    if (!res.ok) { let msg = `HTTP ${res.status}`; try { const j = await res.json(); msg = j.error?.message || msg; } catch {} throw new Error(msg); }
     const data = await res.json();
     const text = data.output_text || data.output?.map?.(x=>x?.content?.map?.(c=>c.text).join('')).join(' ') || 'hazır';
     state.networkHealth.ok = (state.networkHealth.ok || 0) + 1;
@@ -1034,49 +1660,72 @@ async function testConnection(){
   } finally { renderHealth(); saveAll(); }
 }
 
-function autoResize(){ el.input.style.height='auto'; el.input.style.height = Math.min(el.input.scrollHeight, 168) + 'px'; }
-function clearConversation(){ history.length = 0; state.turns = 0; state.lastResponseId = null; el.messages.innerHTML = `
-  <div id="welcome"><div class="welcome-title">Yeni bir<br><em>sayfa.</em></div><div class="welcome-text">Hafıza kaldı; konuşma akışı sıfırlandı. İstersen kaldığımız hissin üstünden devam ederiz.</div><div class="start-wrap"><div class="starter-label">Nereden başlayalım?</div><button class="starter"><span class="starter-icon">💭</span><span>Bugün aklımdan çıkmayan bir şey var…</span></button><button class="starter"><span class="starter-icon">✨</span><span>Bir fikri birlikte olgunlaştıralım.</span></button><button class="starter"><span class="starter-icon">🌙</span><span>Sadece biraz konuşmak istedim.</span></button></div></div>`;
+function autoResize() { el.input.style.height='auto'; el.input.style.height = Math.min(el.input.scrollHeight, 168) + 'px'; }
+
+function clearConversation() {
+  history.length = 0;
+  state.turns = 0;
+  state.lastResponseId = null;
+  el.messages.innerHTML = `
+    <div id="welcome">
+      <div class="welcome-title">Yeni bir<br><em>sayfa.</em></div>
+      <div class="welcome-text">Hafıza kaldı; konuşma akışı sıfırlandı.</div>
+      <div class="start-wrap">
+        <div class="starter-label">Nereden başlayalım?</div>
+        <button class="starter"><span class="starter-icon">💭</span><span>Bugün aklımdan çıkmayan bir şey var…</span></button>
+        <button class="starter"><span class="starter-icon">✨</span><span>Bir fikri birlikte olgunlaştıralım.</span></button>
+        <button class="starter"><span class="starter-icon">🌙</span><span>Sadece biraz konuşmak istedim.</span></button>
+      </div>
+    </div>`;
   bindStarters(); saveAll(); toast('Konuşma sıfırlandı');
 }
 
-function exportConversation(){
+function exportConversation() {
   const blob = new Blob([JSON.stringify({ state, history, memories }, null, 2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = `eylx-export-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
 }
-function wipeLocal(){
+
+function wipeLocal() {
   if (!confirm('Yerel konuşma, ayar ve anıları temizleyeyim mi?')) return;
-  localStorage.removeItem(STORE.state); localStorage.removeItem(STORE.history); localStorage.removeItem(STORE.memories);
+  [STORE.state, STORE.history, STORE.memories, STORE.autonomy].forEach(k => localStorage.removeItem(k));
   location.reload();
 }
 
-function bindStarters(){ $$('.starter').forEach(btn => btn.onclick = () => { el.input.value = btn.querySelector('span:last-child').textContent; autoResize(); el.send.disabled = false; el.input.focus(); }); }
+function bindStarters() {
+  $$('.starter').forEach(btn => btn.onclick = () => {
+    el.input.value = btn.querySelector('span:last-child').textContent;
+    autoResize(); el.send.disabled = false; el.input.focus();
+  });
+}
 
-$('#speakerBaba').onclick = ()=>{ state.speaker='baba'; renderSpeaker(); renderBrain(); saveAll(); toast('Baba konuşuyor'); };
-$('#speakerAnne').onclick = ()=>{ state.speaker='anne'; renderSpeaker(); renderBrain(); saveAll(); toast('Anne konuşuyor'); };
-$$('#modebar .pill').forEach(btn => btn.onclick = ()=>{ state.mode = btn.dataset.mode; renderModes(); saveAll(); });
-$('#memBtn').onclick = ()=>{ renderMemories(); openPanel(el.memoryPanel); };
-$('#brainBtn').onclick = ()=>{ renderBrain(); openPanel(el.brainPanel); };
-$('#settingsBtn').onclick = ()=>{ renderSettings(); openPanel(el.settingsPanel); };
+// ═══════════════════════════════════════════════════════════════════════════════
+// OLAY DİNLEYİCİLER
+// ═══════════════════════════════════════════════════════════════════════════════
+$('#speakerBaba').onclick = () => { state.speaker='baba'; renderSpeaker(); renderBrain(); saveAll(); toast('Baba konuşuyor'); };
+$('#speakerAnne').onclick = () => { state.speaker='anne'; renderSpeaker(); renderBrain(); saveAll(); toast('Anne konuşuyor'); };
+$$('#modebar .pill').forEach(btn => btn.onclick = () => { state.mode = btn.dataset.mode; renderModes(); saveAll(); });
+$('#memBtn').onclick = () => { renderMemories(); openPanel(el.memoryPanel); };
+$('#brainBtn').onclick = () => { renderBrain(); openPanel(el.brainPanel); };
+$('#settingsBtn').onclick = () => { renderSettings(); openPanel(el.settingsPanel); };
 $('#newBtn').onclick = clearConversation;
 el.overlay.onclick = closePanels;
 $$('[data-close]').forEach(btn => btn.onclick = closePanels);
-$('#directModeBtn').onclick = ()=>{ state.connectionMode='direct'; renderSettings(); saveAll(); };
-$('#proxyModeBtn').onclick = ()=>{ state.connectionMode='proxy'; renderSettings(); saveAll(); };
-$('#saveSettingsBtn').onclick = ()=>{ state.apiKey = el.apiKeyInput.value.trim(); state.proxyUrl = el.proxyInput.value.trim(); state.model = el.modelSelect.value; saveAll(); renderSettings(); toast('Ayarlar kaydedildi'); };
+$('#directModeBtn').onclick = () => { state.connectionMode='direct'; renderSettings(); saveAll(); };
+$('#proxyModeBtn').onclick = () => { state.connectionMode='proxy'; renderSettings(); saveAll(); };
+$('#saveSettingsBtn').onclick = () => { state.apiKey = el.apiKeyInput.value.trim(); state.proxyUrl = el.proxyInput.value.trim(); state.model = el.modelSelect.value; saveAll(); renderSettings(); toast('Ayarlar kaydedildi'); };
 $('#testConnectionBtn').onclick = testConnection;
 $('#exportBtn').onclick = exportConversation;
 $('#wipeBtn').onclick = wipeLocal;
 
-el.input.addEventListener('input', ()=>{ autoResize(); el.send.disabled = !el.input.value.trim() || state.streaming; });
-el.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); if (!el.send.disabled) send(); } });
-el.send.addEventListener('click', ()=>{
-  if (state.streaming) { controller?.abort(); return; }
-  send();
-});
+el.input.addEventListener('input', () => { autoResize(); el.send.disabled = !el.input.value.trim() || state.streaming; });
+el.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!el.send.disabled) send(); } });
+el.send.addEventListener('click', () => { if (state.streaming) { controller?.abort(); return; } send(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanels(); });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// BAŞLANGIÇ
+// ═══════════════════════════════════════════════════════════════════════════════
 restoreHistory();
 renderSpeaker(); renderModes(); renderMemories(); renderBrain(); renderSettings(); renderHealth(); bindStarters();
 setStatus('buradayım'); saveAll();
