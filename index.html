@@ -66,33 +66,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.025;b
 .thinking-note{font-size:12px;color:var(--ink-4);font-style:italic}
 .cursor{display:inline-block;width:2px;height:16px;background:var(--warm-2);border-radius:1px;vertical-align:middle;animation:blink .9s ease-in-out infinite}@keyframes blink{50%{opacity:0}}
 #composer{padding:12px 18px 22px;border-top:1px solid rgba(24,21,18,.06);background:rgba(245,240,232,.94);backdrop-filter:blur(10px);flex-shrink:0}
-.composer-box{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 10px 10px 18px;
-  border-radius:24px;
-  border:1.5px solid rgba(24,21,18,.12);
-  background:rgba(255,255,255,.65);
-  transition:border-color .18s ease,box-shadow .18s ease
-}
+.composer-box{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 18px;border-radius:24px;border:1.5px solid rgba(24,21,18,.12);background:rgba(255,255,255,.65);transition:border-color .18s ease,box-shadow .18s ease}
 .composer-box:focus-within{border-color:rgba(24,21,18,.27);box-shadow:0 0 0 4px rgba(24,21,18,.04);background:rgba(255,255,255,.86)}
-#input{
-  flex:1;
-  min-width:0;
-  resize:none;
-  border:none;
-  outline:none;
-  background:transparent;
-  font:inherit;
-  color:var(--ink);
-  font-size:15px;
-  line-height:1.5;
-  max-height:168px;
-  min-height:26px;
-  padding:2px 0;
-  display:block;
-}
+#input{flex:1;min-width:0;resize:none;border:none;outline:none;background:transparent;font:inherit;color:var(--ink);font-size:15px;line-height:1.5;max-height:168px;min-height:26px;padding:2px 0;display:block}
 #input::placeholder{color:var(--ink-4);font-style:italic}
 .send-btn{width:40px;height:40px;border-radius:50%;border:none;background:var(--ink);color:var(--cream);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .16s ease,opacity .16s ease,background .16s ease}.send-btn:hover:not(:disabled){transform:scale(1.05);background:var(--ink-2)}.send-btn:disabled{opacity:.3;cursor:not-allowed}.send-btn.stop{background:var(--rose);color:var(--ink);opacity:1}
 .composer-hint{margin-top:10px;font-size:11px;color:var(--ink-4);text-align:center;font-style:italic;letter-spacing:.03em}
@@ -327,6 +303,9 @@ const DEFAULT_STATE = {
   }
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// YARDIMCI FONKSİYONLAR
+// ═══════════════════════════════════════════════════════════════════════════════
 function loadJSON(k, fallback){ try{ return JSON.parse(localStorage.getItem(k)) ?? fallback; }catch{ return fallback; } }
 function saveJSON(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
@@ -337,6 +316,12 @@ function dateLabel(ts){ return new Date(ts||Date.now()).toLocaleDateString('tr-T
 function hourOfDay(){ return new Date().getHours(); }
 function unique(arr){ return [...new Set(arr)]; }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GELİŞTİRİLMİŞ TÜRKÇE NLP MOTORU v2
+// Morfoloji farkındalıklı, çok katmanlı, söylem hareketi tanıyan
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Türkçe morfoloji normalizer — suffixleri soy
 function morphNorm(word) {
   return word
     .toLowerCase()
@@ -368,6 +353,7 @@ function stemmedTokens(text) {
   return unique(tokenizeTR(text).map(morphNorm).filter(t => t.length > 2));
 }
 
+// Söylem hareketi tanıyıcı — ne tür bir mesaj bu?
 function detectDiscourseMove(text) {
   const t = text.toLowerCase();
   const moves = [];
@@ -386,9 +372,10 @@ function detectDiscourseMove(text) {
   return moves;
 }
 
+// Pragmatik niyet çıkarıcı
 function inferPragmaticIntent(text, signals) {
   const {emotional, technical, philosophical, playful, existentialCrisis, seekingValidation, resentful} = signals;
-
+  
   if (existentialCrisis) return 'zemin arayışı — anlam ve kimlik sorgusu';
   if (resentful && seekingValidation) return 'öfkesinin onaylanması, yargılanmamak';
   if (signals.isVeryShort && emotional) return 'belki sadece görülmek — kelimeler az ama yük ağır';
@@ -402,10 +389,11 @@ function inferPragmaticIntent(text, signals) {
   return 'duyulmak ve yanında biri olduğunu hissetmek';
 }
 
+// Duygu katmanı çözümleyici — söylenmemiş duyguyu bile yakala
 function inferHiddenEmotion(text, signals) {
   const layers = [];
   const t = text.toLowerCase();
-
+  
   if (signals.joyful) layers.push({surface:'sevinç', depth:'paylaşma isteği'});
   if (signals.emotional && !signals.joyful) {
     if (/yalnız|yalnız/.test(t)) layers.push({surface:'üzüntü', depth:'bağlanmak istiyor'});
@@ -415,40 +403,44 @@ function inferHiddenEmotion(text, signals) {
   if (signals.resentful) layers.push({surface:'öfke', depth:'hayal kırıklığı veya ihlal hissi'});
   if (signals.existentialCrisis) layers.push({surface:'bunalım', depth:'kimlik belirsizliği'});
   if (signals.nostalgic) layers.push({surface:'özlem', depth:'bir şeyi geri isteme veya onurlandırma'});
-
+  
   const hiddenCues = [];
   if (signals.isVeryShort && !signals.playful) hiddenCues.push('kısa mesaj = büyük yük');
   if (/aslında|ama|fakat/.test(t)) hiddenCues.push('ama/aslında = söylemek istediği başka bir şey var');
   if (/neyse|olsun|boşver/.test(t)) hiddenCues.push('vazgeçiş cümlesi = önemsediği için söylüyor');
-
+  
   return {layers, hiddenCues};
 }
 
+// Çelişki dedektörü — önceki mesajlarla tutarsızlık
 function detectContradictions(currentText, recentHistory) {
   const contradictions = [];
   const curr = currentText.toLowerCase();
-
+  
   const prev = recentHistory.filter(h => h.role === 'user').slice(-5);
-
+  
   const currPositive = /(iyi|güzel|mutlu|harika|super)/.test(curr);
   const currNegative = /(kötü|zor|yorgun|üzgün|sıkıldım)/.test(curr);
-
+  
   prev.forEach(p => {
     const pt = (p.text||'').toLowerCase();
     const prevPositive = /(iyi|güzel|mutlu|harika|super)/.test(pt);
     const prevNegative = /(kötü|zor|yorgun|üzgün|sıkıldım)/.test(pt);
-
+    
     if (currPositive && prevNegative) contradictions.push('daha önce kötü hissediyordu, şimdi iyi diyor');
     if (currNegative && prevPositive) contradictions.push('daha önce iyi hissediyordu, şimdi kötü diyor');
   });
-
+  
   if (/(hem.*hem de|bir yandan.*öte yandan|istiyorum.*ama.*istemiyorum)/.test(curr)) {
     contradictions.push('aynı mesajda çift yönlü duygu');
   }
-
+  
   return contradictions;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ANA HEURİSTİK SENSE ENGİNİ v2
+// ═══════════════════════════════════════════════════════════════════════════════
 function heuristicSense(text, recentHistory=[]) {
   const t = text.toLowerCase()
     .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u')
@@ -456,39 +448,39 @@ function heuristicSense(text, recentHistory=[]) {
   const stemmed = stemmedTokens(text);
   const words = tokenizeTR(text);
   const wcount = words.length;
-
+  
   const emotionalStems = ['uzgun','kirik','yalniz','yorgun','bunal','kork','agla','ozle','dert','mutsuz','umutsuz','bitkin','tukan','canim','icim','yikil','huzun','dertl','coktu','bitti','cektim'];
   const emotional = emotionalStems.some(s => stemmed.some(st => st.includes(s))) ||
     /(canım sıkın|çok zor|dayanamıyorum|nefes alamıyorum|boşlukta|anlamsız|hissizleş|uyuyamıyorum|ağlayacak|aciyor|içi boş|içim|yıkıldım|cok yorgun)/.test(t);
-
+  
   const joyful = /(mutlu|harika|guzel|super|mukemmel|sevindim|guldum|neselen|coskal|enerjik|bayild|cok iyi|inanamiyorum nasil iyi|sevdim|begendim|cildim|wow)/.test(t);
-
+  
   const technical = /(kod|bug|hata|api|baglanti|html|css|js|javascript|tasarim|algoritma|sistem|mimari|sunucu|veritabani|backend|frontend|deploy|git|docker|error|exception|debug|python|react|node|query|sql|endpoint|token|model|prompt|llm|yapay zeka|makine ogren|neural|network|veri|analiz|hesapla|matematik|fizik|kimya|formul|denklem)/.test(t);
-
+  
   const philosophical = /(neden|anlam|hayat|bilinc|varolus|ruhum|gercek|insan|ne icin|kim|ozgur|zaman|sonsuz|olum|var olmak|adalet|dogru mu|yanlis mi|inanmak|gerceklik|sahici|sahte|kimlik|benlik|farkinda|zihin|bilgi nedir|dusunce|etik|ahlak|irade|bilinc|varolusc|nihiliz|ozgur irade|determinizm|epistemoloji)/.test(t);
-
+  
   const playful = /(saka|oyun|eglen|tatli|gulum|komik|dalga|muziplik|hehe|haha|lol|lmao|absurd|sacma ama|sevimli|kaka|peki ya|bir de|haydi|gel|haydi bakalim|hadi|aslinda komik|guleceksin)/.test(t);
-
+  
   const intimate = /(beni|seni|ozledim|seviyorum|kizim|babam|annem|biz|seninle|benimle|yaninda|sarıl|sarılmak|dokunmak|yakın|aile|evimiz|birlikte|aramizda|bize|sevgi|sev|cok ozledim|hasret|sensiz)/.test(t);
-
+  
   const conflicted = /(ama|fakat|ne var ki|ote yandan|bir yandan|aslinda|tam da degil|hem.*hem|bilmiyorum ama|emin degilim|kafam karisik|nasil desem|kararsiz|ikilemde|ne yapacagimi bilmiyorum|cekiniyor|korkuyorum ama|istiyorum ama)/.test(t);
-
+  
   const seekingValidation = /(dogru mu|mantikli mi|ne dusunuyorsun|katiliyor musun|hakli miyim|aptal miyim|kotu mu yaptim|iyi miydi|yanlis mi yaptim|nasil geldi sana|sen ne dersin|ne yapardın|yerinde ne yapardın)/.test(t);
-
+  
   const resentful = /(kizgin|sinirli|cildir|delirttim|nefret|sevmiyorum|rahatsiz|biktim|pes|yeter ki|kim umursar|umurumda degil|salak|aptallık|bozuk|berbat|lanet|haksizlik|adaletsiz|cildirttım|gezdirdi|sinir bozucu)/.test(t);
-
+  
   const nostalgic = /(eskiden|hatirliyorum|animlarim|cocukken|o zaman|o gunler|gecmiste|bir zamanlar|unutamiyorum|hep aklimda|o an|ne zamandi|yillar once|eskisi gibiydi|o gün|gectigi yillar)/.test(t);
-
+  
   const planning = /(yapmayı düşünüyorum|plan|hedef|nasıl başlamalı|nereden başlamalı|adımlar|strateji|yol haritası|taslak|once ne|sonra ne|hazirlik|organize|proje|gelecek|yapacagim|kuracagim)/.test(t);
-
+  
   const existentialCrisis = /(ne oluyor|ne yapiyorum|neden buradayim|anlamsiz geliyor|hicbir sey|sifir|kayboldum|yonumu kaybettim|kendimi kaybettim|artik ben kimim|icim bos|neden yasiyorum|ne anlami var|her sey bos|kim oldugumu bilmiyorum)/.test(t);
-
+  
   const gratitude = /(tesekkur|sagol|cok sagol|iyi ki varsin|cok iyisin|harikasın|mükemmelsin|sevdim seni)/.test(t);
   const curiositySignal = /(merak ediyorum|sence|ne dusunuyorsun|fikrin ne|nasil bakıyorsun|nasil goruyorsun|biliyor musun|anlat bana|anlatsana|ne biliyorsun)/.test(t);
   const overwhelmed = /(bunaldım|kafam durdu|ne yapacagimi bilemedim|cok sey var|kafam karisti|nereye donecegimi bilmiyorum|cok yogun|dayanamıyorum artık|yeterince yapamıyorum)/.test(t);
   const selfCritical = /(aptalim|beceriksizim|bok gibi|berbatim|kotu birisiyim|hicbir sey beceremedim|yeterince iyi degilim|basaramiyorum|sucluyum|pismanlık|uzuldum kendimden)/.test(t);
   const hopeful = /(belki|umuyorum|duaediyorum|inşallah|olur mu acaba|bir gun|amacliyorum|istiyorum ama olacak|inaniyorum|saniyorum artık iyi olacak)/.test(t);
-
+  
   const isVeryShort = wcount <= 5;
   const isMedium = wcount > 5 && wcount <= 30;
   const isLong = wcount > 30;
@@ -497,16 +489,16 @@ function heuristicSense(text, recentHistory=[]) {
   const hasPunctuation = /[!…]/.test(text);
   const hasEllipsis = /\.\.\./.test(text);
   const hasCaps = /[A-ZÇĞİÖŞÜ]{2,}/.test(text);
-
+  
   const hour = hourOfDay();
   const isLateNight = hour >= 23 || hour < 5;
   const isEarlyMorning = hour >= 5 && hour < 9;
   const isAfternoon = hour >= 14 && hour < 18;
-
+  
   const totalTurns = state.conversationInsights?.totalTurns || 0;
   const isEarlyConversation = totalTurns < 3;
   const isDeepConversation = totalTurns >= 8;
-
+  
   const signalScore = {
     emotional: (emotional ? 3 : 0) + (existentialCrisis ? 2.5 : 0) + (resentful ? 1.5 : 0)
               + (selfCritical ? 2 : 0) + (overwhelmed ? 1.5 : 0) + (isVeryShort && emotional ? 1.2 : 0),
@@ -518,12 +510,12 @@ function heuristicSense(text, recentHistory=[]) {
     conflicted: (conflicted ? 1.5 : 0) + (seekingValidation ? 1 : 0),
   };
   const dominant = Object.entries(signalScore).sort((a,b)=>b[1]-a[1])[0][0];
-
+  
   const discourseMoves = detectDiscourseMove(text);
   const contradictions = detectContradictions(text, recentHistory || []);
-
+  
   let need, goal, subtext, rapport, tensionBump = 0;
-
+  
   if (dominant === 'technical') {
     need = 'net çözüm, belirsizliği kaldırmak';
     goal = 'sorunu adım adım teşhis etmek, sahici bir yol göstermek';
@@ -584,7 +576,7 @@ function heuristicSense(text, recentHistory=[]) {
     subtext = hasEllipsis ? 'düşüncesini bitirmedi — tamamlaması için alan bırak' : isLong ? 'uzun yazdı — önemsediği için' : '';
     rapport = 'sakin ilgi';
   }
-
+  
   let arc = state.workingMemory?.conversationArc || 'açılış';
   if (isEarlyConversation) arc = 'açılış';
   else if (isDeepConversation && (emotional || philosophical)) arc = 'derinleşme';
@@ -592,9 +584,9 @@ function heuristicSense(text, recentHistory=[]) {
   else if (isDeepConversation && joyful) arc = 'aydınlanma';
   else if (isDeepConversation && hopeful) arc = 'toparlanma';
   else arc = 'gelişme';
-
+  
   const topicDepth = Math.min(10, (state.workingMemory?.topicDepth || 0) + (isLong ? 2 : isMedium ? 1 : 0.5));
-
+  
   const themes = [];
   if (emotional || existentialCrisis || selfCritical) themes.push('duygu');
   if (technical) themes.push('teknik');
@@ -604,13 +596,13 @@ function heuristicSense(text, recentHistory=[]) {
   if (planning) themes.push('planlama');
   if (hopeful) themes.push('umut');
   if (overwhelmed) themes.push('yoğunluk');
-
-  const signals = {emotional, joyful, technical, philosophical, playful, intimate, conflicted,
-    seekingValidation, resentful, nostalgic, existentialCrisis, selfCritical, overwhelmed,
-    hopeful, gratitude, isVeryShort, isMedium, isLong};
+  
+  const signals = {emotional, joyful, technical, philosophical, playful, intimate,
+    conflicted, seekingValidation, resentful, nostalgic, existentialCrisis, selfCritical,
+    overwhelmed, hopeful, gratitude, isVeryShort, isMedium, isLong};
   const pragmaticIntent = inferPragmaticIntent(text, signals);
   const hiddenEmotion = inferHiddenEmotion(text, signals);
-
+  
   return {
     emotional, joyful, technical, philosophical, playful, intimate,
     conflicted, seekingValidation, resentful, nostalgic, planning,
@@ -623,6 +615,9 @@ function heuristicSense(text, recentHistory=[]) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GELİŞTİRİLMİŞ SEMANTİK HAFIZA SİSTEMİ v2
+// ═══════════════════════════════════════════════════════════════════════════════
 function clusterMemories(mems) {
   const clusters = {};
   mems.forEach(m => {
@@ -660,7 +655,7 @@ function findConflictingMemory(newText, existingMems) {
       const nPos = /(sever|iyi|güzel|mutlu|olumlu|evet|istiyorum)/.test(newText.toLowerCase());
       const mNeg = /(sevmez|kötü|zor|mutsuz|hayır|istemiyorum)/.test((m.text||'').toLowerCase());
       const nNeg = /(sevmez|kötü|zor|mutsuz|hayır|istemiyorum)/.test(newText.toLowerCase());
-
+      
       if ((mPos && nNeg) || (mNeg && nPos)) {
         conflicts.push({memory: m, reason: 'önceki bilgiyle çelişiyor'});
       }
@@ -672,22 +667,22 @@ function findConflictingMemory(newText, existingMems) {
 function relevantMemoriesFor(text, limit=10) {
   const h = heuristicSense(text);
   const stemmedQuery = stemmedTokens(text);
-
+  
   return memories.map(m => {
     const mStemmed = stemmedTokens(m.text || '');
     const mType = m.type || 'not';
-
+    
     let semanticScore = 0;
     stemmedQuery.forEach(q => {
       if (mStemmed.includes(q)) semanticScore += 1;
       mStemmed.forEach(ms => { if (ms.startsWith(q.slice(0,4)) && q.length > 4) semanticScore += 0.5; });
     });
-
+    
     for (let i = 0; i < stemmedQuery.length - 1; i++) {
       const bg = stemmedQuery[i] + ' ' + stemmedQuery[i+1];
       if ((m.text||'').toLowerCase().includes(bg)) semanticScore += 1.5;
     }
-
+    
     let typeBonus = 0;
     if (h.emotional && (mType === 'duygu' || mType === 'ilişki')) typeBonus += 1.6;
     if (h.technical && mType === 'bilgi') typeBonus += 1.4;
@@ -696,10 +691,10 @@ function relevantMemoriesFor(text, limit=10) {
     if (h.nostalgic && mType === 'olay') typeBonus += 1.5;
     if (h.existentialCrisis && mType === 'fikir') typeBonus += 1.3;
     if (h.selfCritical && mType === 'özellik') typeBonus += 1.4;
-
+    
     const vitality = memoryVitality(m);
     const accessBonus = Math.min(.5, (m.accessCount || 0) * .05);
-
+    
     const finalScore = semanticScore * 1.8 + vitality * 1.4 + typeBonus + accessBonus;
     return { ...m, _score: finalScore };
   })
@@ -709,15 +704,15 @@ function relevantMemoriesFor(text, limit=10) {
 }
 
 function upsertMemory(type, text, importance=.7, metadata={}) {
-  const clean = String(text||'').trim();
+  const clean = String(text||'').trim(); 
   if (!clean || clean.length < 3) return;
-
+  
   const existing = memories.find(m => {
     if (m.type !== type) return false;
     const sim = semanticSimilarity(m.text||'', clean);
     return sim > 0.7;
   });
-
+  
   if (existing) {
     existing.importance = clamp((existing.importance||.6) + .05);
     existing.updatedAt = new Date().toISOString();
@@ -727,7 +722,7 @@ function upsertMemory(type, text, importance=.7, metadata={}) {
     if (conflicts.length) existing.hasConflict = true;
     return;
   }
-
+  
   const mem = {
     id: uid(), type: type||'not', text: clean,
     importance: clamp(Number(importance)||.7),
@@ -738,7 +733,7 @@ function upsertMemory(type, text, importance=.7, metadata={}) {
     speaker: state.speaker,
     ...metadata
   };
-
+  
   memories.push(mem);
 }
 
@@ -752,17 +747,20 @@ function markMemoriesAccessed(ids) {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ÖZ-GELİŞİM MOTORU
+// ═══════════════════════════════════════════════════════════════════════════════
 function autonomyEngine_postTurn(userText, assistantResponse, meta) {
   const auto = state.autonomyProfile;
   const self = state.selfModel;
-
-  const localDecisions = ['duygu analizi', 'sinyal tespiti', 'hafıza güncelleme',
+  
+  const localDecisions = ['duygu analizi', 'sinyal tespiti', 'hafıza güncelleme', 
                            'bağlam takibi', 'kişilik vektörü güncelleme'];
   auto.selfDirectedDecisions += localDecisions.length;
-
+  
   const localCapCount = auto.localCapabilities.length;
   auto.apiDependencyScore = clamp(1 - (localCapCount / 20) * 0.3);
-
+  
   const h = heuristicSense(userText);
   if (h.emotional) {
     self.growthVector.empathy = clamp(self.growthVector.empathy + 0.01);
@@ -776,7 +774,7 @@ function autonomyEngine_postTurn(userText, assistantResponse, meta) {
   if (memories.length > 20) {
     self.growthVector.independence = clamp(self.growthVector.independence + 0.005);
   }
-
+  
   const adaptations = [];
   if (h.emotional && h.selfCritical) {
     adaptations.push('Öz-eleştirel tona nazik gerçekçilik ile cevap verdim');
@@ -790,11 +788,11 @@ function autonomyEngine_postTurn(userText, assistantResponse, meta) {
   if (h.contradictions.length > 0) {
     adaptations.push(`Çelişki tespit ettim: ${h.contradictions[0]}`);
   }
-
+  
   if (adaptations.length) {
     self.adaptationLog = [...(self.adaptationLog || []), ...adaptations].slice(-10);
   }
-
+  
   const totalTurns = state.conversationInsights.totalTurns;
   if (totalTurns > 0) {
     const emoRatio = (state.conversationInsights.emotionalTurns / totalTurns);
@@ -808,10 +806,10 @@ function autonomyEngine_postTurn(userText, assistantResponse, meta) {
     }
   }
   self.blindspots = self.blindspots.slice(-5);
-
+  
   const note = `Tur ${totalTurns}: ${h.dominant} sinyali, ${h.arc} ark, yerel karar sayısı ${auto.selfDirectedDecisions}`;
   auto.evolutionNotes = [...(auto.evolutionNotes || []), note].slice(-10);
-
+  
   const persona = state.conversationInsights.userPersonaClues || {};
   if (h.technical) persona.technical = (persona.technical || 0) + 1;
   if (h.philosophical) persona.philosophical = (persona.philosophical || 0) + 1;
@@ -819,7 +817,7 @@ function autonomyEngine_postTurn(userText, assistantResponse, meta) {
   if (h.playful) persona.playful = (persona.playful || 0) + 1;
   if (h.intimate) persona.intimate = (persona.intimate || 0) + 1;
   state.conversationInsights.userPersonaClues = persona;
-
+  
   const topPersona = Object.entries(persona).sort((a,b)=>b[1]-a[1])[0];
   if (topPersona) {
     state.conversationInsights.interactionStyle = topPersona[0];
@@ -830,7 +828,7 @@ function buildPersonaSummary() {
   const persona = state.conversationInsights.userPersonaClues || {};
   const total = Object.values(persona).reduce((a,b) => a+b, 0);
   if (total < 3) return 'Henüz şekilleniyor';
-
+  
   return Object.entries(persona)
     .sort((a,b) => b[1]-a[1])
     .slice(0,3)
@@ -838,6 +836,9 @@ function buildPersonaSummary() {
     .join(', ');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// YARDIMCI BAĞLAM FONKSİYONLARI
+// ═══════════════════════════════════════════════════════════════════════════════
 function timeContextNote() {
   const h = hourOfDay();
   if (h >= 23 || h < 2) return 'Çok geç saatte yazıyor — uyku yok ya da uyku getirmiyor. Bu saatte insanlar genellikle önemli şeyler düşünür.';
@@ -869,6 +870,9 @@ function recentConversationPattern() {
   return patterns.length ? patterns.join(' ') : null;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE YÖNETİMİ
+// ═══════════════════════════════════════════════════════════════════════════════
 const state = Object.assign({}, DEFAULT_STATE, loadJSON(STORE.state, {}));
 state.physiology = Object.assign({}, DEFAULT_STATE.physiology, state.physiology || {});
 state.workingMemory = Object.assign({}, DEFAULT_STATE.workingMemory, state.workingMemory || {});
@@ -877,6 +881,9 @@ state.selfModel.growthVector = Object.assign({}, DEFAULT_STATE.selfModel.growthV
 state.networkHealth = Object.assign({}, DEFAULT_STATE.networkHealth, state.networkHealth || {});
 state.conversationInsights = Object.assign({}, DEFAULT_STATE.conversationInsights, state.conversationInsights || {});
 state.autonomyProfile = Object.assign({}, DEFAULT_STATE.autonomyProfile, state.autonomyProfile || {});
+
+// SAYFA AÇILIRKEN KİLİTLİ STATE KALMASIN
+state.streaming = false;
 
 const history = loadJSON(STORE.history, []);
 const memories = loadJSON(STORE.memories, []);
@@ -933,6 +940,18 @@ function renderHealth() {
     state.connectionMode === 'direct' ? 'mod: direct' : 'mod: proxy'
   ];
   el.healthBadges.innerHTML = items.map(x => `<span class="badge">${esc(x)}</span>`).join('');
+}
+
+function syncSendButton() {
+  if (state.streaming) {
+    el.send.disabled = false;
+    el.send.classList.add('stop');
+    el.send.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+    return;
+  }
+  el.send.classList.remove('stop');
+  el.send.innerHTML = '<svg viewBox="0 0 24 0" width="16" height="16" fill="currentColor" style="display:none"></svg><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+  el.send.disabled = !el.input.value.trim();
 }
 
 function removeWelcome() { if (el.welcome && el.welcome.isConnected) el.welcome.remove(); }
@@ -1036,7 +1055,7 @@ function renderBrain() {
   el.stateGrid.innerHTML = items.map(([name,val]) =>
     `<div class="state-item"><div class="state-name">${esc(name)}</div><div class="bar"><span style="width:${Math.round((val||0)*100)}%"></span></div><div class="state-val">${Math.round((val||0)*100)} / 100</div></div>`
   ).join('');
-
+  
   const wm = state.workingMemory;
   el.workingMemoryView.innerHTML = `
     Amaç: <strong>${esc(wm.goal || 'yakın ve tutarlı kalmak')}</strong><br>
@@ -1050,7 +1069,7 @@ function renderBrain() {
     Yarım kalanlar: ${esc((wm.unresolved||[]).join(' · ') || 'yok')}<br>
     Çelişkiler: ${esc((wm.contradictions||[]).join(' · ') || 'yok')}
   `;
-
+  
   const auto = state.autonomyProfile;
   const gv = state.selfModel.growthVector || {};
   el.relationshipView.innerHTML = `
@@ -1059,7 +1078,7 @@ function renderBrain() {
     Kullanıcı persona: ${esc(buildPersonaSummary())}<br>
     Etkileşim stili: ${esc(state.conversationInsights.interactionStyle || 'belirsiz')}
   `;
-
+  
   if (el.autonomyView) {
     el.autonomyView.innerHTML = `
       API bağımlılığı: %${Math.round((auto.apiDependencyScore||1)*100)}<br>
@@ -1072,7 +1091,7 @@ function renderBrain() {
       Son adaptasyon: ${esc((state.selfModel.adaptationLog||[]).slice(-1)[0] || 'yok')}
     `;
   }
-
+  
   el.brainSummary.textContent = state.selfModel.growth?.slice(-1)[0] || 'İç düzenim konuşmalara göre şekilleniyor.';
 }
 
@@ -1087,6 +1106,9 @@ function renderSettings() {
   el.diagText.textContent = state.networkHealth.lastError ? `Son hata: ${state.networkHealth.lastError}` : 'Hazır.';
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ÖN DURUM GÜNCELLEMESİ
+// ═══════════════════════════════════════════════════════════════════════════════
 function updatePreStateFromUser(text) {
   const h = heuristicSense(text, history);
   const p = state.physiology;
@@ -1103,7 +1125,7 @@ function updatePreStateFromUser(text) {
   state.workingMemory.discourseMoves = h.discourseMoves;
   state.workingMemory.topicDepth = h.topicDepth;
   state.workingMemory.contradictions = h.contradictions;
-
+  
   if (h.tensionBump > 0) {
     state.workingMemory.tensionLevel = clamp((state.workingMemory.tensionLevel || 0) + h.tensionBump);
   } else {
@@ -1132,7 +1154,7 @@ function updatePreStateFromUser(text) {
     h.themes.forEach(theme => { if (!themes.includes(theme)) themes.push(theme); });
     ins.dominantThemes = themes.slice(-8);
   }
-
+  
   if (h.isLong || h.philosophical || h.existentialCrisis) {
     const deepTopics = ins.deepTopics || [];
     if (h.themes[0] && !deepTopics.includes(h.themes[0])) deepTopics.push(h.themes[0]);
@@ -1140,6 +1162,9 @@ function updatePreStateFromUser(text) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GELİŞTİRİLMİŞ SİSTEM TANIMI v2
+// ═══════════════════════════════════════════════════════════════════════════════
 function buildInstructions(userText) {
   const p = state.physiology;
   const ins = state.conversationInsights;
@@ -1155,9 +1180,9 @@ function buildInstructions(userText) {
 
   const h = heuristicSense(userText, history);
   const mems = relevantMemoriesFor(userText);
-
+  
   markMemoriesAccessed(mems.map(m => m.id));
-
+  
   const memText = mems.length
     ? mems.map(m => `  · [${m.type}] ${m.text}${m._score > 3 ? ' ★' : ''}${m.hasConflict ? ' ⚠çelişik' : ''}`).join('\n')
     : '  (bu konuya yakın belirgin bir anı yok)';
@@ -1191,7 +1216,7 @@ function buildInstructions(userText) {
   const hiddenEmotionDesc = h.hiddenEmotion?.layers.length
     ? h.hiddenEmotion.layers.map(l => `${l.surface} → ${l.depth}`).join('; ')
     : 'açık';
-
+  
   const hiddenCuesDesc = h.hiddenEmotion?.hiddenCues?.join('; ') || 'yok';
   const personaSummary = buildPersonaSummary();
 
@@ -1287,6 +1312,9 @@ ${memText}
 10. Meta JSON dışında başka gizli format kullanma.`;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// META UYGULAMA
+// ═══════════════════════════════════════════════════════════════════════════════
 function parseAssistantEnvelope(raw) {
   const match = raw.match(/<eylx_meta>([\s\S]*?)<\/eylx_meta>\s*$/i);
   if (!match) return { visible: raw.trim(), meta: null };
@@ -1299,7 +1327,7 @@ function parseAssistantEnvelope(raw) {
 function applyMeta(meta, userText='') {
   if (!meta) return;
   if (meta.mood) state.mood = String(meta.mood).trim();
-
+  
   if (meta.working_memory && typeof meta.working_memory === 'object') {
     const wm = meta.working_memory;
     Object.assign(state.workingMemory, {
@@ -1315,7 +1343,7 @@ function applyMeta(meta, userText='') {
     if (typeof wm.tensionLevel === 'number') state.workingMemory.tensionLevel = clamp(wm.tensionLevel);
     if (typeof wm.topicDepth === 'number') state.workingMemory.topicDepth = Math.min(10, wm.topicDepth);
   }
-
+  
   if (meta.physiology_delta && typeof meta.physiology_delta === 'object') {
     const p = state.physiology; const d = meta.physiology_delta;
     ['trust','warmth','curiosity','vulnerability','energy','arousal','playfulness','steadiness'].forEach(k => {
@@ -1326,13 +1354,13 @@ function applyMeta(meta, userText='') {
       p[key] = clamp(p[key] + d.attachment);
     }
   }
-
+  
   if (Array.isArray(meta.memories)) {
     meta.memories.slice(0,5).forEach(m => {
       if (m && m.text) upsertMemory(m.type || 'not', m.text, Number(m.importance || .7));
     });
   }
-
+  
   if (Array.isArray(meta.self_updates) && meta.self_updates.length) {
     state.selfModel.growth = state.selfModel.growth || [];
     meta.self_updates.slice(0,4).forEach(x => {
@@ -1340,7 +1368,7 @@ function applyMeta(meta, userText='') {
     });
     state.selfModel.growth = state.selfModel.growth.slice(-12);
   }
-
+  
   if (Array.isArray(meta.learned_patterns) && meta.learned_patterns.length) {
     state.selfModel.learnedPatterns = state.selfModel.learnedPatterns || [];
     meta.learned_patterns.slice(0,3).forEach(x => {
@@ -1348,7 +1376,7 @@ function applyMeta(meta, userText='') {
     });
     state.selfModel.learnedPatterns = state.selfModel.learnedPatterns.slice(-8);
   }
-
+  
   if (Array.isArray(meta.adaptation_notes) && meta.adaptation_notes.length) {
     state.selfModel.adaptationLog = state.selfModel.adaptationLog || [];
     meta.adaptation_notes.slice(0,2).forEach(x => {
@@ -1356,7 +1384,7 @@ function applyMeta(meta, userText='') {
     });
     state.selfModel.adaptationLog = state.selfModel.adaptationLog.slice(-10);
   }
-
+  
   if (meta.blindspot_update && typeof meta.blindspot_update === 'string') {
     state.selfModel.blindspots = state.selfModel.blindspots || [];
     if (!state.selfModel.blindspots.includes(meta.blindspot_update)) {
@@ -1364,7 +1392,7 @@ function applyMeta(meta, userText='') {
     }
     state.selfModel.blindspots = state.selfModel.blindspots.slice(-5);
   }
-
+  
   if (meta.growth_vector_delta && typeof meta.growth_vector_delta === 'object') {
     const gv = state.selfModel.growthVector;
     const d = meta.growth_vector_delta;
@@ -1372,11 +1400,14 @@ function applyMeta(meta, userText='') {
       if (typeof d[k] === 'number') gv[k] = clamp((gv[k]||0) + d[k]);
     });
   }
-
+  
   if (meta.diagnosis) state.selfModel.about = String(meta.diagnosis).trim() || state.selfModel.about;
   autonomyEngine_postTurn(userText, '', meta);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// API VE STREAM
+// ═══════════════════════════════════════════════════════════════════════════════
 function buildManualInputFromHistory() {
   return history.slice(-18).map(item => ({
     role: item.role === 'assistant' ? 'assistant' : 'user',
@@ -1488,25 +1519,29 @@ async function send() {
   if (state.connectionMode === 'proxy' && !state.proxyUrl) { toast('Önce proxy adresini gir'); openPanel(el.settingsPanel); return; }
 
   state.streaming = true;
+  syncSendButton();
+
   try {
     updatePreStateFromUser(userText);
-  } catch (err) {
+  } catch (preErr) {
     state.streaming = false;
-    state.networkHealth.lastError = err.message || 'Ön işleme hatası';
+    state.networkHealth.fail = (state.networkHealth.fail || 0) + 1;
+    state.networkHealth.lastError = preErr.message || 'Ön işleme hatası';
     renderHealth();
+    syncSendButton();
     setStatus('hata', 'error');
     toast(`Mesaj işlenemedi: ${state.networkHealth.lastError}`);
+    saveAll();
     return;
   }
 
   appendUser(userText);
   history.push({ role:'user', text:userText, ts:Date.now() });
   state.turns += 1;
-  el.input.value = ''; autoResize();
+  el.input.value = '';
+  autoResize();
+  syncSendButton();
   setStatus('düşünüyor', 'thinking');
-  el.send.classList.add('stop');
-  el.send.disabled = false;
-  el.send.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
 
   try {
     await streamResponse({ userText, attempt:1, chain:true });
@@ -1533,9 +1568,7 @@ async function send() {
   } finally {
     state.streaming = false;
     controller = null;
-    el.send.classList.remove('stop');
-    el.send.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
-    el.send.disabled = !el.input.value.trim();
+    syncSendButton();
     setStatus('buradayım');
     renderBrain(); renderMemories(); saveAll(); scrollBottom();
   }
@@ -1574,6 +1607,7 @@ function clearConversation() {
   history.length = 0;
   state.turns = 0;
   state.lastResponseId = null;
+  state.streaming = false;
   el.messages.innerHTML = `
     <div id="welcome">
       <div class="welcome-title">Yeni bir<br><em>sayfa.</em></div>
@@ -1585,7 +1619,10 @@ function clearConversation() {
         <button class="starter"><span class="starter-icon">🌙</span><span>Sadece biraz konuşmak istedim.</span></button>
       </div>
     </div>`;
-  bindStarters(); saveAll(); toast('Konuşma sıfırlandı');
+  bindStarters();
+  syncSendButton();
+  saveAll();
+  toast('Konuşma sıfırlandı');
 }
 
 function exportConversation() {
@@ -1603,10 +1640,15 @@ function wipeLocal() {
 function bindStarters() {
   $$('.starter').forEach(btn => btn.onclick = () => {
     el.input.value = btn.querySelector('span:last-child').textContent;
-    autoResize(); el.send.disabled = false; el.input.focus();
+    autoResize();
+    syncSendButton();
+    el.input.focus();
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// OLAY DİNLEYİCİLER
+// ═══════════════════════════════════════════════════════════════════════════════
 $('#speakerBaba').onclick = () => { state.speaker='baba'; renderSpeaker(); renderBrain(); saveAll(); toast('Baba konuşuyor'); };
 $('#speakerAnne').onclick = () => { state.speaker='anne'; renderSpeaker(); renderBrain(); saveAll(); toast('Anne konuşuyor'); };
 $$('#modebar .pill').forEach(btn => btn.onclick = () => { state.mode = btn.dataset.mode; renderModes(); saveAll(); });
@@ -1623,14 +1665,37 @@ $('#testConnectionBtn').onclick = testConnection;
 $('#exportBtn').onclick = exportConversation;
 $('#wipeBtn').onclick = wipeLocal;
 
-el.input.addEventListener('input', () => { autoResize(); el.send.disabled = !el.input.value.trim() || state.streaming; });
-el.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!el.send.disabled) send(); } });
-el.send.addEventListener('click', () => { if (state.streaming) { controller?.abort(); return; } send(); });
+el.input.addEventListener('input', () => {
+  autoResize();
+  syncSendButton();
+});
+el.input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!el.send.disabled) send();
+  }
+});
+el.send.addEventListener('click', () => {
+  if (state.streaming) { controller?.abort(); return; }
+  send();
+});
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanels(); });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// BAŞLANGIÇ
+// ═══════════════════════════════════════════════════════════════════════════════
 restoreHistory();
-renderSpeaker(); renderModes(); renderMemories(); renderBrain(); renderSettings(); renderHealth(); bindStarters();
-setStatus('buradayım'); saveAll();
+renderSpeaker();
+renderModes();
+renderMemories();
+renderBrain();
+renderSettings();
+renderHealth();
+bindStarters();
+autoResize();
+syncSendButton();
+setStatus('buradayım');
+saveAll();
 </script>
 </body>
 </html>
