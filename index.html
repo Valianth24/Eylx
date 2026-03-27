@@ -1432,7 +1432,7 @@ async function streamResponse({userText, attempt=1, chain=true}) {
     model: state.model || 'gpt-5',
     instructions,
     stream: true,
-    max_output_tokens: 1100,
+    max_output_tokens: 11100,
   };
   if (chain && state.lastResponseId) {
     body.previous_response_id = state.lastResponseId;
